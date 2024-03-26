@@ -17,25 +17,25 @@ class DataProvider:
                                 'test': self.audio_test_path,
                                 'train': self.audio_train_path}
 
-    def run(self, path: str):
+    def run(self):
         """
         this method will run the data provider on the given path and do the following:
         1 run on data paths
         2 read the video data
         3 extract audio from video
         4 save the audio
-        :param path: path to run the data provider on
         :return:
         """
-        video_path = self.video_path_dict[path]
-        audio_path = self.audio_path_dict[path]
-        os.makedirs(audio_path, exist_ok=True)
-        for file_name in os.listdir(video_path):
-            check_files = file_name.split('.')
-            if check_files[1] == 'mp4':
-                video_file_path = os.path.join(video_path, file_name)
-                audio_file_path = os.path.join(audio_path, check_files[0] + '.mp3')
-                DataProvider.extract_audio_from_video(video_file_path, audio_file_path)
+        for path in ['dev', 'test', 'train']:
+            video_path = self.video_path_dict[path]
+            audio_path = self.audio_path_dict[path]
+            os.makedirs(audio_path, exist_ok=True)
+            for file_name in os.listdir(video_path):
+                check_files = file_name.split('.')
+                if check_files[1] == 'mp4':
+                    video_file_path = os.path.join(video_path, file_name)
+                    audio_file_path = os.path.join(audio_path, check_files[0] + '.mp3')
+                    DataProvider.extract_audio_from_video(video_file_path, audio_file_path)
 
     @staticmethod
     def extract_audio_from_video(video_file_path: str, audio_file_path: str) -> None:
@@ -50,6 +50,3 @@ class DataProvider:
 
 if __name__ == '__main__':
     data_provider = DataProvider()
-    data_provider.run('dev')
-    data_provider.run('test')
-    data_provider.run('train')
