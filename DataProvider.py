@@ -50,3 +50,4 @@ class DataProvider:
 
 if __name__ == '__main__':
     data_provider = DataProvider()
+    data_provider.run()
