@@ -1,2 +1,1 @@
-pandas~=2.2.1
-opencv-python~=4.9.0.80
+moviepy~=1.0.3
