@@ -16,6 +16,7 @@ class DataProvider:
         self.audio_path_dict = {'dev': self.audio_dev_path,
                                 'test': self.audio_test_path,
                                 'train': self.audio_train_path}
+        self.unsuccessful_file_names = {'train': [], 'dev': [], 'test': []}
 
     def run(self):
         """
@@ -35,7 +36,11 @@ class DataProvider:
                 if check_files[1] == 'mp4':
                     video_file_path = os.path.join(video_path, file_name)
                     audio_file_path = os.path.join(audio_path, check_files[0] + '.mp3')
-                    DataProvider.extract_audio_from_video(video_file_path, audio_file_path)
+                    try:
+                        DataProvider.extract_audio_from_video(video_file_path, audio_file_path)
+                    except Exception:
+                        print(f'Error extracting audio from {video_file_path} to {audio_file_path}')
+                        self.unsuccessful_file_names[path].append(file_name)
 
     @staticmethod
     def extract_audio_from_video(video_file_path: str, audio_file_path: str) -> None:
