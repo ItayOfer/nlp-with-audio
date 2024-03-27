@@ -4,7 +4,7 @@ import logging
 
 
 # Configure logging
-logging.basicConfig(level=logging.ERROR, filename='data_provider.log', filemode='w',
+logging.basicConfig(level=logging.INFO, filename='data_provider.log', filemode='w',
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 
