@@ -1,5 +1,11 @@
 import os
 from moviepy.editor import VideoFileClip
+import logging
+
+
+# Configure logging
+logging.basicConfig(level=logging.ERROR, filename='data_provider.log', filemode='w',
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class DataProvider:
@@ -27,7 +33,7 @@ class DataProvider:
         4 save the audio
         :return:
         """
-        for path in ['dev', 'test', 'train']:
+        for path in ['train', 'dev', 'test']:
             video_path = self.video_path_dict[path]
             audio_path = self.audio_path_dict[path]
             os.makedirs(audio_path, exist_ok=True)
@@ -39,8 +45,12 @@ class DataProvider:
                     try:
                         DataProvider.extract_audio_from_video(video_file_path, audio_file_path)
                     except Exception:
-                        print(f'Error extracting audio from {video_file_path} to {audio_file_path}')
+                        error_message = f'Error extracting audio from {video_file_path} to {audio_file_path}'
+                        logging.error(error_message)
                         self.unsuccessful_file_names[path].append(file_name)
+        logging.info(f"unsuccessful to read {len(self.unsuccessful_file_names['train'])} from train")
+        logging.info(f"unsuccessful to read {len(self.unsuccessful_file_names['dev'])} from dev")
+        logging.info(f"unsuccessful to read {len(self.unsuccessful_file_names['test'])} from test")
 
     @staticmethod
     def extract_audio_from_video(video_file_path: str, audio_file_path: str) -> None:
