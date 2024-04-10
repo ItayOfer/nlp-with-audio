@@ -16,7 +16,9 @@ class AudioFeaturesExtractor:
         self.train_features_dict = {}
 
     @staticmethod
-    def audio_feature_extraction(audio_path):
+    def audio_feature_extraction(audio_path:str):
+        """This function takes the path of an audio file,
+        and returns a dictionary with the audio features for the specific file"""
 
         y, sr = librosa.load(audio_path)
         # Ensure y is at least 1024 samples long
@@ -45,9 +47,11 @@ class AudioFeaturesExtractor:
             'zero_crossing_rate': zero_crossing_rate,
             'pitch': pitch
         }
+
         return features_dict
 
     def process_audio_files(self, audio_path, target_dict):
+        """This function performs audio feature extraction for each file in the directory"""
         allowed_extensions = {'.wav', '.mp3', '.flac', '.aiff', '.aif', '.ogg'}
 
         for filename in os.listdir(audio_path):
@@ -59,16 +63,14 @@ class AudioFeaturesExtractor:
 
     @staticmethod
     def save_features_dict(features_dict, save_path, filename):
-        # Convert NumPy arrays to lists for JSON serialization
+        """This function saves a unique dict for each directory"""
         for key in features_dict:
             for feature in features_dict[key]:
                 if isinstance(features_dict[key][feature], np.ndarray):
                     features_dict[key][feature] = features_dict[key][feature].tolist()
 
-        # Construct the full path for the JSON file
         full_path = os.path.join(save_path, f"{filename}.json")
 
-        # Save the dictionary to a JSON file
         with open(full_path, 'w') as f:
             json.dump(features_dict, f, indent=4)
 
