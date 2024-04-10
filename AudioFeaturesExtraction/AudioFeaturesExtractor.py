@@ -10,7 +10,7 @@ class AudioFeaturesExtractor:
     def __init__(self):
         self.dev_audio_path = '../dev_audio'
         self.test_audio_path = '../test_audio'
-        self.train_audio_path = 'train_audio'
+        self.train_audio_path = '../train_audio'
         self.dev_features_dict = {}
         self.test_features_dict = {}
         self.train_features_dict = {}
