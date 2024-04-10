@@ -1,71 +1,92 @@
+import os
+import json
 import librosa
 import pandas as pd
 import numpy as np
 
+
 class AudioFeaturesExtractor:
 
-    def __init__(self,audio_path):
-        self.audio_path = audio_path
-        self.audio_features_dict = {}
+    def __init__(self):
+        self.dev_audio_path = '../dev_audio'
+        self.test_audio_path = '../test_audio'
+        self.train_audio_path = 'train_audio'
+        self.dev_features_dict = {}
+        self.test_features_dict = {}
+        self.train_features_dict = {}
 
-    def audio_feature_extraction(self):
+    @staticmethod
+    def audio_feature_extraction(audio_path):
 
-        y,sr = librosa.load(self.audio_path)
+        y, sr = librosa.load(audio_path)
+        # Ensure y is at least 1024 samples long
+        if len(y) < 1024:
+            y = librosa.util.fix_length(y, size=1024)
 
-        self.audio_features_dict['mfccs'] = librosa.feature.mfcc(y=y, sr=sr)
-        self.audio_features_dict['chroma'] = librosa.feature.chroma_stft(y=y, sr=sr)
-        self.audio_features_dict['spectral_contrast'] = librosa.feature.spectral_contrast(y=y, sr=sr)
-        self.audio_features_dict['tonnetz'] = librosa.feature.tonnetz(y=librosa.effects.harmonic(y), sr=sr)
-        self.audio_features_dict['tempo'] = librosa.beat.beat_track(y=y, sr=sr)
-        self.audio_features_dict['rms_energy'] = librosa.feature.rms(y=y)
-        self.audio_features_dict['zero_crossing_rate'] = librosa.feature.zero_crossing_rate(y)
-        f0, voiced_flag, voiced_probs = librosa.pyin(y, fmin=librosa.note_to_hz('C2')
-                                                     , fmax=librosa.note_to_hz('C7'))
+        mfccs = librosa.feature.mfcc(y=y, sr=sr)
+        chroma = librosa.feature.chroma_stft(y=y, sr=sr)
+        spectral_contrast = librosa.feature.spectral_contrast(y=y, sr=sr)
+        tonnetz = librosa.feature.tonnetz(y=librosa.effects.harmonic(y), sr=sr)
+        tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+        tempo = tempo
+        rms_energy = librosa.feature.rms(y=y)
+        zero_crossing_rate = librosa.feature.zero_crossing_rate(y)
+        f0, voiced_flag, voiced_probs = librosa.pyin(y, fmin=librosa.note_to_hz('C2'),
+                                                     fmax=librosa.note_to_hz('C7'))
+        pitch = f0
 
         features_dict = {
-            'MFCCs': mfccs,
-            'Chroma': chroma,
-            'Spectral_Contrast': spectral_contrast,
-            'Tonnetz': tonnetz,
-            'Tempo': tempo,
-            'RMS_Energy': rms_energy,
-            'Zero_Crossing_Rate': zero_crossing_rate,
-            'Pitch': f0
+            'mfccs': mfccs,
+            'chroma': chroma,
+            'spectral_contrast': spectral_contrast,
+            'tonnetz': tonnetz,
+            'tempo': tempo,
+            'rms_energy': rms_energy,
+            'zero_crossing_rate': zero_crossing_rate,
+            'pitch': pitch
         }
+        return features_dict
 
-y, sr = librosa.load('../train_audio/dia0_utt0.mp3')
-# Mel-Frequency Cepstral Coefficients (MFCCs)
-# Chroma Feature
-# Spectral Contrast
-# Tonnetz (Tonal Centroid Features)
-# Tempo
-# Energy and RMS
-# Zero Crossing Rate
-# Pitch
+    def process_audio_files(self, audio_path, target_dict):
+        allowed_extensions = {'.wav', '.mp3', '.flac', '.aiff', '.aif', '.ogg'}
 
-# For demonstration, let's create a feature with a single value per audio file
-single_value_features = {
-    'tempo': tempo,
-    'overall_rms_energy': np.mean(rms_energy)
-}
+        for filename in os.listdir(audio_path):
+            if os.path.splitext(filename)[1].lower() in allowed_extensions:
+                file_path = os.path.join(audio_path, filename)
+                if os.path.isfile(file_path):
+                    features = self.audio_feature_extraction(file_path)
+                    target_dict[filename] = features
 
-# Multi-value features (we're using the mean across time frames here for simplicity)
-multi_value_features = {
-    'mfccs': np.mean(mfccs, axis=1),
-    'chroma': np.mean(chroma, axis=1),
-    'spectral_contrast': np.mean(spectral_contrast, axis=1),
-    'tonnetz': np.mean(tonnetz, axis=1),
-    'zero_crossing_rate': np.mean(zero_crossing_rate, axis=1)
-}
+    @staticmethod
+    def save_features_dict(features_dict, save_path, filename):
+        # Convert NumPy arrays to lists for JSON serialization
+        for key in features_dict:
+            for feature in features_dict[key]:
+                if isinstance(features_dict[key][feature], np.ndarray):
+                    features_dict[key][feature] = features_dict[key][feature].tolist()
 
-print(single_value_features)
-print(multi_value_features)
-# Combine single and multi-value features into a DataFrame
-#features_data = {**single_value_features}
-#features_data_b = {**multi_value_features}
-#df = pd.DataFrame(features_data, index=[0])  # Use index=[0] to indicate a single observation
-#df_b = pd.DataFrame(features_data_b)
-# If you have multiple audio files, you would append each new set of features as a new row
+        # Construct the full path for the JSON file
+        full_path = os.path.join(save_path, f"{filename}.json")
 
-#print(df.head())
-#print(df_b.head())
+        # Save the dictionary to a JSON file
+        with open(full_path, 'w') as f:
+            json.dump(features_dict, f, indent=4)
+
+    def process_all_paths_and_save(self):
+        self.process_audio_files(self.dev_audio_path, self.dev_features_dict)
+        self.save_features_dict(self.dev_features_dict, self.dev_audio_path, 'dev_features')
+
+        self.process_audio_files(self.test_audio_path, self.test_features_dict)
+        self.save_features_dict(self.test_features_dict, self.test_audio_path, 'test_features')
+
+        self.process_audio_files(self.train_audio_path, self.train_features_dict)
+        self.save_features_dict(self.train_features_dict, self.train_audio_path, 'train_features')
+
+
+def main():
+    extractor = AudioFeaturesExtractor()
+    extractor.process_all_paths_and_save()
+
+
+if __name__ == '__main__':
+    main()
