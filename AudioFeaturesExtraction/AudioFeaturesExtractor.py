@@ -10,7 +10,7 @@ class AudioFeaturesExtractor:
         self.train_directory = '../train_audio'
         self.test_directory = '../test_audio'
         self.dev_directory = '../dev_audio'
-        self.train_info_path = '../MELD.Raw/test_sent_emo.csv'
+        self.train_info_path = '../MELcsv'
         self.test_info_path = '../MELD.Raw/train_sent_emo.csv'
         self.dev_info_path = '../MELD.Raw/dev_sent_emo.csv'
 
@@ -97,14 +97,12 @@ class AudioFeaturesExtractor:
             train_files_paths = [file for file in train_files_paths if
                                  os.path.splitext(os.path.basename(file))[0] in matching_keys_train]
 
-
         # Repeat for test and dev
         matching_keys_test = set(is_in_test['file_key']).intersection(set(test_info['file_key']))
 
         if len(matching_keys_test) > 0:
             test_files_paths = [file for file in test_files_paths if
                                 os.path.splitext(os.path.basename(file))[0] in matching_keys_test]
-
 
         matching_keys_dev = set(is_in_dev['file_key']).intersection(set(dev_info['file_key']))
 
@@ -181,4 +179,3 @@ if __name__ == '__main__':
         pickle.dump(test, f)
     with open('dev_data.pkl', 'wb') as f:
         pickle.dump(dev, f)
-
