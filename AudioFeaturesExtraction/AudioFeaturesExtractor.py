@@ -141,7 +141,7 @@ class AudioFeaturesExtractor:
         :return: dict with waveforms and labels
         """
         res = {}
-        for i, (audio_path_name, waveform, label) in enumerate(data_loader):
+        for audio_path_name, waveform, label in data_loader:
             res[audio_path_name[0]] = {
                 'waveforms': waveform[0],
                 'label': label[0]
