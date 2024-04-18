@@ -10,8 +10,8 @@ class AudioFeaturesExtractor:
         self.train_directory = '../train_audio'
         self.test_directory = '../test_audio'
         self.dev_directory = '../dev_audio'
-        self.train_info_path = '../MELD.Raw/test_sent_emo.csv'
-        self.test_info_path = '../MELD.Raw/train_sent_emo.csv'
+        self.test_info_path = '../MELD.Raw/test_sent_emo.csv'
+        self.train_info_path = '../MELD.Raw/train/train_sent_emo.csv'
         self.dev_info_path = '../MELD.Raw/dev_sent_emo.csv'
 
     def audio_files_paths_listing(self):
