@@ -27,5 +27,5 @@ class AudioDataset(Dataset):
             waveform = waveform[:, :self.max_length]
 
         label_tensor = torch.tensor(label)
-        audio_path_name = audio_path.split('/')[2].split('.')[0]
+        audio_path_name = audio_path.replace('\\', '/').split('/')[-1].split('.')[0]
         return audio_path_name, waveform, label_tensor
