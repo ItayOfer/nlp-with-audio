@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
+from torch.nn.utils.rnn import pad_sequence
 from collections import Counter
 from nltk.tokenize import word_tokenize
 import nltk
@@ -47,6 +48,16 @@ def build_vocab(data):
     vocab['<pad>'] = 0
     return vocab
 
+def collate_batch(batch):
+    label_list, text_list, lengths = [], [], []
+    for (_text, _label) in batch:
+        label_list.append(_label)
+        processed_text = torch.tensor(_text, dtype=torch.long)
+        text_list.append(processed_text)
+        lengths.append(processed_text.size(0))
+    text_list = pad_sequence(text_list, batch_first=True, padding_value=0)
+    label_list = torch.tensor(label_list, dtype=torch.long)
+    return text_list, label_list
 
 
 class SentimentDataset(Dataset):
@@ -55,28 +66,42 @@ class SentimentDataset(Dataset):
         self.labels = labels
 
     def encode(self, text, vocab):
-        tokens = word_tokenize(text.lower())
+        tokens = word_tokenize(text)
         return [vocab.get(token, 0) for token in tokens]
 
     def __len__(self):
         return len(self.texts)
 
     def __getitem__(self, idx):
-        return torch.tensor(self.texts[idx], dtype=torch.long), torch.tensor(self.labels[idx], dtype=torch.long)
+        return self.texts[idx], self.labels[idx]
 
 
 # Multi-Class Feed-Forward Neural Network
 class SentimentModel(nn.Module):
     def __init__(self, vocab_size):
         super(SentimentModel, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, 50)  # 50-dimensional embeddings
-        self.fc = nn.Linear(50, 3)  # Output layer for 3 classes
+        self.embedding = nn.Embedding(vocab_size, 50, padding_idx=0)
+        self.fc = nn.Linear(50, 3)
 
     def forward(self, x):
         x = self.embedding(x)
-        x = torch.mean(x, dim=1)  # Average embeddings
+        mask = x.ne(0).float()  # Create a mask for non-zero entries
+
+        # Sum embeddings across the sequence length and divide by the number of non-zero entries per sequence
+        x = torch.sum(x, dim=1)  # Sum across sequence length
+        mask_sum = mask.sum(dim=1)  # Sum mask across sequence length
+        # Avoid division by zero by adding a small epsilon where mask_sum is zero
+        mask_sum = mask_sum + (mask_sum == 0).float() * 1e-10
+        x = x / mask_sum.unsqueeze(-1)  # Divide sum by non-zero counts, ensure right broadcasting
+
         x = self.fc(x)
         return x
+
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+vectorizer = TfidfVectorizer(max_features=1000)
+# features = vectorizer.fit_transform(texts)
+
 
 
 if __name__ == '__main__':
@@ -102,9 +127,9 @@ if __name__ == '__main__':
     dev_dataset = SentimentDataset(df_dev['tokens'], df_dev['labels'], vocab)
     test_dataset = SentimentDataset(df_test['tokens'], df_test['labels'], vocab)
 
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    dev_loader = DataLoader(dev_dataset, batch_size=32, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, collate_fn=collate_batch)
+    dev_loader = DataLoader(dev_dataset, batch_size=32, shuffle=False, collate_fn=collate_batch)
+    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, collate_fn=collate_batch)
 
     # Model, Loss, and Optimizer
     model = SentimentModel(len(vocab))
@@ -115,9 +140,10 @@ if __name__ == '__main__':
     for epoch in range(10):
         for inputs, targets in train_loader:
             optimizer.zero_grad()
-            outputs = model(inputs)
+            outputs = model(inputs)  # Ensure inputs are on the right device
             loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()
         print(f"Epoch {epoch + 1}, Loss: {loss.item()}")
+
 
