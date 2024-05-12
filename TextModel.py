@@ -46,67 +46,6 @@ class TextCleaner:
         return res
 
 
-# Tokenization and Vocabulary Building
-def build_vocab(data):
-    counter = Counter()
-    for text in data:
-        tokens = text.lower().split()
-        counter.update(tokens)
-    vocab = {word: i + 1 for i, (word, _) in enumerate(counter.items())}
-    vocab['<pad>'] = 0
-    return vocab
-
-
-def collate_batch(batch):
-    label_list, text_list, lengths = [], [], []
-    for (_text, _label) in batch:
-        label_list.append(_label)
-        processed_text = torch.tensor(_text, dtype=torch.long)
-        text_list.append(processed_text)
-        lengths.append(processed_text.size(0))
-    text_list = pad_sequence(text_list, batch_first=True, padding_value=0)
-    label_list = torch.tensor(label_list, dtype=torch.long)
-    return text_list, label_list
-
-
-class SentimentDataset(Dataset):
-    def __init__(self, texts, labels, vocab):
-        self.texts = [self.encode(text, vocab) for text in texts]
-        self.labels = labels
-
-    def encode(self, text, vocab):
-        tokens = word_tokenize(text)
-        return [vocab.get(token, 0) for token in tokens]
-
-    def __len__(self):
-        return len(self.texts)
-
-    def __getitem__(self, idx):
-        return self.texts[idx], self.labels[idx]
-
-
-# Multi-Class Feed-Forward Neural Network
-class SentimentModel(nn.Module):
-    def __init__(self, vocab_size):
-        super(SentimentModel, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, 50, padding_idx=0)
-        self.fc = nn.Linear(50, 3)
-
-    def forward(self, x):
-        x = self.embedding(x)
-        mask = x.ne(0).float()  # Create a mask for non-zero entries
-
-        # Sum embeddings across the sequence length and divide by the number of non-zero entries per sequence
-        x = torch.sum(x, dim=1)  # Sum across sequence length
-        mask_sum = mask.sum(dim=1)  # Sum mask across sequence length
-        # Avoid division by zero by adding a small epsilon where mask_sum is zero
-        mask_sum = mask_sum + (mask_sum == 0).float() * 1e-10
-        x = x / mask_sum.unsqueeze(-1)  # Divide sum by non-zero counts, ensure right broadcasting
-
-        x = self.fc(x)
-        return x
-
-
 def sentence_to_vec(sentence_list, embedding_model):
     vec_list = []
     for sentence in sentence_list:
