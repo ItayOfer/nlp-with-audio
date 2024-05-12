@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from stop_words import get_stop_words
 import torch
@@ -9,9 +10,9 @@ from collections import Counter
 from nltk.tokenize import word_tokenize
 import nltk
 nltk.download('punkt')
-
+import gensim.downloader as api
 import re
-
+import xgboost as xgb
 
 class TextCleaner:
     def __init__(self, language='en'):
@@ -98,10 +99,20 @@ class SentimentModel(nn.Module):
         return x
 
 
-from sklearn.feature_extraction.text import TfidfVectorizer
-vectorizer = TfidfVectorizer(max_features=1000)
-# features = vectorizer.fit_transform(texts)
-
+def sentence_to_vec(sentence_list, embedding_model):
+    vec_list = []
+    for sentence in sentence_list:
+        word_vectors = []
+        for word in sentence.split():
+            try:
+                word_vectors.append(embedding_model[word])
+            except KeyError:
+                continue  # Skip words not in the vocabulary
+        if word_vectors:
+            vec_list.append(np.mean(word_vectors, axis=0))
+        else:
+            vec_list.append(np.zeros(100))  # Assuming 100 dimensional embeddings
+    return np.array(vec_list)
 
 
 if __name__ == '__main__':
@@ -121,29 +132,36 @@ if __name__ == '__main__':
     df_dev['labels'] = text_cleaner.set_target(df_dev['Sentiment'])
     df_test['labels'] = text_cleaner.set_target(df_test['Sentiment'])
 
-    # Preparing datasets
-    vocab = build_vocab(df_train['tokens'])
-    train_dataset = SentimentDataset(df_train['tokens'], df_train['labels'], vocab)
-    dev_dataset = SentimentDataset(df_dev['tokens'], df_dev['labels'], vocab)
-    test_dataset = SentimentDataset(df_test['tokens'], df_test['labels'], vocab)
+    glove_model = api.load("glove-wiki-gigaword-100")
+    text_test = df_test['tokens'].values.tolist()
+    sentence_vectors_test = sentence_to_vec(text_test, glove_model)
+    text_train = df_train['tokens'].values.tolist()
+    sentence_vectors_train = sentence_to_vec(text_train, glove_model)
+    X_train = pd.DataFrame(sentence_vectors_train)
+    X_test = pd.DataFrame(sentence_vectors_test)
 
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, collate_fn=collate_batch)
-    dev_loader = DataLoader(dev_dataset, batch_size=32, shuffle=False, collate_fn=collate_batch)
-    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, collate_fn=collate_batch)
+    y_train = df_train['labels']
+    y_test = df_test['labels']
 
-    # Model, Loss, and Optimizer
-    model = SentimentModel(len(vocab))
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    dtrain = xgb.DMatrix(X_train, label=y_train)
+    dtest = xgb.DMatrix(X_test, label=y_test)
 
-    # Training Loop
-    for epoch in range(10):
-        for inputs, targets in train_loader:
-            optimizer.zero_grad()
-            outputs = model(inputs)  # Ensure inputs are on the right device
-            loss = criterion(outputs, targets)
-            loss.backward()
-            optimizer.step()
-        print(f"Epoch {epoch + 1}, Loss: {loss.item()}")
+    # Set up parameters for xgboost
+    params = {
+        'max_depth': 6,  # you can tune this and other parameters
+        'eta': 0.3,  # learning rate
+        'objective': 'multi:softprob',  # multi-class classification
+        'num_class': 3  # number of classes
+    }
 
+    num_boost_round = 100
+    bst = xgb.train(params, dtrain, num_boost_round)
+    preds = bst.predict(dtest)
+    predictions = np.asarray([np.argmax(line) for line in preds])
 
+    # Evaluate predictions
+    from sklearn.metrics import accuracy_score, classification_report
+
+    accuracy = accuracy_score(y_test, predictions)
+    print("Accuracy without audio features: %.2f%%" % (accuracy * 100.0))
+    print(classification_report(y_test, predictions))
