@@ -278,3 +278,24 @@ if __name__ == '__main__':
 
     accuracy_text_audio = accuracy_score(y_test, x_preds_audio_text)
     print("Accuracy text and audio features: %.2f%%" % (accuracy_text_audio * 100.0))
+
+    import pandas as pd
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+
+    def plot_feature_distribution(train_df, test_df):
+        features = train_df.columns
+
+        for feature in features:
+            plt.figure(figsize=(12, 6))
+            sns.kdeplot(train_df[feature], label='Train', fill=True, color='blue', alpha=0.5)
+            sns.kdeplot(test_df[feature], label='Test', fill=True, color='red', alpha=0.5)
+
+            plt.title(f'Distribution of {feature}')
+            plt.xlabel(feature)
+            plt.ylabel('Density')
+            plt.legend()
+            plt.show()
+
+
+    plot_feature_distribution(X_train_text_and_audio, X_test_text_and_audio)
