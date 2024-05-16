@@ -40,24 +40,24 @@ class AudioWaveformsConverter:
 
         # Initialize the feature dictionary
         features = {
-            'centroid_median': np.median(spectral_centroid),
-            'bandwidth_median': np.median(spectral_bandwidth),
-            'flatness_median': np.median(spectral_flatness),
-            'rolloff_median': np.median(spectral_rolloff),
-            'rms_energy_median': np.median(rms_energy),
-            'zcr_median': np.median(zcr),
+            'centroid_mean': np.mean(spectral_centroid),
+            'bandwidth_mean': np.mean(spectral_bandwidth),
+            'flatness_mean': np.mean(spectral_flatness),
+            'rolloff_mean': np.mean(spectral_rolloff),
+            'rms_energy_mean': np.mean(rms_energy),
+            'zcr_mean': np.mean(zcr),
             'tempo': tempo,
-            'tempogram_median': np.median(tempogram),
-            'tempogram_ratio_median': np.median(tempogram_ratio),
-            'tonnetz_median': np.median(tonnetz)
+            'tempogram_mean': np.mean(tempogram),
+            'tempogram_ratio_mean': np.mean(tempogram_ratio),
+            'tonnetz_mean': np.mean(tonnetz)
         }
 
         # Adding MFCCs and Chroma features
         for i in range(mfccs.shape[0]):
-            features[f'mfccs_median_{i}'] = np.median(mfccs[i, :])
+            features[f'mfccs_mean_{i}'] = np.mean(mfccs[i, :])
 
         for i in range(chroma.shape[0]):
-            features[f'chroma_median_{i}'] = np.median(chroma[i, :])
+            features[f'chroma_mean_{i}'] = np.mean(chroma[i, :])
 
         return features
 
@@ -85,14 +85,18 @@ class AudioWaveformsConverter:
 
 if __name__ == '__main__':
     sample_rate = 16000
-    # train = AudioWaveformsConverter('train_data.pkl', sample_rate)
-    # test = AudioWaveformsConverter('test_data.pkl', sample_rate)
+    train = AudioWaveformsConverter('train_data.pkl', sample_rate)
+    test = AudioWaveformsConverter('test_data.pkl', sample_rate)
     dev = AudioWaveformsConverter('dev_data.pkl', sample_rate)
-    # train_audio_df = train.run()
-    # test_audio_df = test.run()
+    train_audio_df = train.run()
+    print('train done')
+    test_audio_df = test.run()
+    print('test done')
     dev_audio_df = dev.run()
-    dev_audio_df.to_csv('dev_fe_median.csv')
-    # a = 1
+    print('dev done')
+    dev_audio_df.to_csv('dev_fe.csv')
+    train_audio_df.to_csv('train_fe.csv')
+    test_audio_df.to_csv('test_fe.csv')
 
     # import subprocess
     #
