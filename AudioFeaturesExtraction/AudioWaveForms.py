@@ -25,9 +25,7 @@ class AudioWaveformsConverter:
         tempo, _ = librosa.beat.beat_track(y=waveform, sr=self.sample_rate)
         onset_env = librosa.onset.onset_strength(y=waveform, sr=self.sample_rate)
         tempogram = librosa.feature.tempogram(onset_envelope=onset_env, sr=self.sample_rate)
-        fourier_tempogram = librosa.feature.fourier_tempogram(onset_envelope=onset_env, sr=self.sample_rate)
         tempogram_ratio = librosa.feature.tempogram(onset_envelope=onset_env, sr=self.sample_rate, win_length=16)
-        p_features = librosa.feature.poly_features(S=librosa.stft(waveform), sr=self.sample_rate, order=2)
         tonnetz = librosa.feature.tonnetz(y=harmonic, sr=self.sample_rate)
 
         # Basic spectral features
@@ -42,29 +40,24 @@ class AudioWaveformsConverter:
 
         # Initialize the feature dictionary
         features = {
-            'centroid_mean': np.mean(spectral_centroid),
-            'bandwidth_mean': np.mean(spectral_bandwidth),
-            'flatness_mean': np.mean(spectral_flatness),
-            'rolloff_mean': np.mean(spectral_rolloff),
-            'rms_energy_mean': np.mean(rms_energy),
-            'zcr_mean': np.mean(zcr),
+            'centroid_median': np.median(spectral_centroid),
+            'bandwidth_median': np.median(spectral_bandwidth),
+            'flatness_median': np.median(spectral_flatness),
+            'rolloff_median': np.median(spectral_rolloff),
+            'rms_energy_median': np.median(rms_energy),
+            'zcr_median': np.median(zcr),
             'tempo': tempo,
-            'tempogram_mean': np.mean(tempogram),
-            'fourier_tempogram_mean': np.mean(fourier_tempogram),
-            'tempogram_ratio_mean': np.mean(tempogram_ratio),
-            'tonnetz_mean': np.mean(tonnetz)
+            'tempogram_median': np.median(tempogram),
+            'tempogram_ratio_median': np.median(tempogram_ratio),
+            'tonnetz_median': np.median(tonnetz)
         }
 
         # Adding MFCCs and Chroma features
         for i in range(mfccs.shape[0]):
-            features[f'mfccs_mean_{i}'] = np.mean(mfccs[i, :])
+            features[f'mfccs_median_{i}'] = np.median(mfccs[i, :])
 
         for i in range(chroma.shape[0]):
-            features[f'chroma_mean_{i}'] = np.mean(chroma[i, :])
-
-        # Adding Polynomial features
-        for i in range(p_features.shape[0]):
-            features[f'poly_features_{i}'] = np.mean(p_features[i, :])
+            features[f'chroma_median_{i}'] = np.median(chroma[i, :])
 
         return features
 
@@ -91,18 +84,55 @@ class AudioWaveformsConverter:
 
 
 if __name__ == '__main__':
-    sample_rate = 44100
-    train = AudioWaveformsConverter('train_data.pkl', sample_rate)
+    sample_rate = 16000
+    # train = AudioWaveformsConverter('train_data.pkl', sample_rate)
     # test = AudioWaveformsConverter('test_data.pkl', sample_rate)
-    # dev = AudioWaveformsConverter('dev_data.pkl', sample_rate)
-
-    train_audio_df = train.run()
+    dev = AudioWaveformsConverter('dev_data.pkl', sample_rate)
+    # train_audio_df = train.run()
     # test_audio_df = test.run()
-    # dev_audio_df = dev.run()
+    dev_audio_df = dev.run()
+    dev_audio_df.to_csv('dev_fe_median.csv')
+    # a = 1
 
-    with open('train_audio_df.pkl', 'wb') as f:
-        pickle.dump(train_audio_df, f)
-#    with open('test_audio_df.pkl', 'wb') as f:
-#        pickle.dump(test_audio_df, f)
-#    with open('dev_audio_df.pkl', 'wb') as f:
-#        pickle.dump(dev_audio_df, f)
+    # import subprocess
+    #
+    #
+    # def preprocess_audio(input_directory, output_directory, file_format):
+    #     command = [
+    #         "audeep", "preprocess",
+    #         "-i", input_directory,
+    #         "-o", output_directory,
+    #         "--format", file_format
+    #     ]
+    #     subprocess.run(command, check=True)
+    #
+    #
+    # # Example usage
+    # preprocess_audio("dev_audio", "audeep/dev_audio", ".mp3")
+    #
+    #
+    # def train_model(input_directory, output_directory, config_path):
+    #     command = [
+    #         "audeep", "train",
+    #         "-i", input_directory,
+    #         "-o", output_directory,
+    #         "--model-config", config_path
+    #     ]
+    #     subprocess.run(command, check=True)
+    #
+    # # Example usage
+    # train_model("audeep/dev_audio", "audeep/dev_model", "AudioFeaturesExtraction/audeep_config.yaml")
+    #
+    #
+    # def extract_features(input_directory, output_directory, model_directory):
+    #     command = [
+    #         "audeep", "feature",
+    #         "-i", input_directory,
+    #         "-o", output_directory,
+    #         "-m", model_directory
+    #     ]
+    #     subprocess.run(command, check=True)
+    #
+    #
+    # # Example usage
+    # extract_features("audeep/dev_audio", "audeep/dev_features", "audeep/dev_model")
