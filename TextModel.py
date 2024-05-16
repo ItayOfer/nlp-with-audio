@@ -96,6 +96,22 @@ def extract_features(waveform, sr):
     return features
 
 
+def process_audio_data(audio_dict, sample_rate):
+    """
+    Process each audio scene, extract features, and compile them into a single DataFrame.
+    """
+    feature_list = []
+
+    for scene_id, data in audio_dict.items():
+        waveform = data['waveforms'][0].numpy()  # Ensure waveform is a NumPy array
+        features = extract_features(waveform, sample_rate)
+        features['scene_id'] = scene_id  # Add scene_id to the features dictionary
+        feature_list.append(features)
+
+    # Create a DataFrame from the list of feature dictionaries
+    combined_features_df = pd.DataFrame(feature_list)
+    return combined_features_df
+
 def sentence_to_vec(df, embedding_model):
     vec_list = []
     for index, row in df.iterrows():
