@@ -4,7 +4,10 @@ from sklearn.metrics import accuracy_score, classification_report
 import librosa
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import GridSearchCV
 from stop_words import get_stop_words
+from sklearn.linear_model import LogisticRegression
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -18,7 +21,7 @@ nltk.download('punkt')
 import gensim.downloader as api
 import re
 import xgboost as xgb
-
+import statsmodels.api as sm
 
 class TextCleaner:
     def __init__(self, language='en'):
@@ -42,7 +45,7 @@ class TextCleaner:
         return text_series.apply(self._clean)
 
     def set_target(self, target: pd.Series) -> pd.Series:
-        res = target.replace({'negative': 0, 'neutral': 1, 'positive': 2})
+        res = target.replace({'negative': 0, 'neutral': 1, 'positive': 0})
         return res
 
 
@@ -161,17 +164,17 @@ if __name__ == '__main__':
     sentence_vectors_train = sentence_to_vec(df_train, glove_model)
 
     ## ---- make audio fearues ----
-    with open('AudioFeaturesExtraction/train_data.pkl', 'rb') as file:
-        train_audio_dict = pickle.load(file)
-
-    with open('AudioFeaturesExtraction/test_data.pkl', 'rb') as file:
-        test_audio_dict = pickle.load(file)
+    # with open('AudioFeaturesExtraction/train_data.pkl', 'rb') as file:
+    #     train_audio_dict = pickle.load(file)
+    #
+    # with open('AudioFeaturesExtraction/test_data.pkl', 'rb') as file:
+    #     test_audio_dict = pickle.load(file)
 
     # sample_rate = 44100
     # audio_feature_train = process_audio_data(train_audio_dict, sample_rate)
     # audio_feature_test = process_audio_data(test_audio_dict, sample_rate)
-    audio_feature_train = pd.read_csv('audio_features_train.csv')
-    audio_feature_test = pd.read_csv('audio_features_test.csv')
+    audio_feature_train = pd.read_csv('train_fe.csv')
+    audio_feature_test = pd.read_csv('test_fe.csv')
     audio_feature_train = audio_feature_train.set_index('scene_id')
     audio_feature_test = audio_feature_test.set_index('scene_id')
 
@@ -189,46 +192,89 @@ if __name__ == '__main__':
 
     X_train_only_text = sentence_vectors_train.loc[common_ids_train]
     X_test_only_text = sentence_vectors_test.loc[common_ids_test]
+    new_column_names = [f'Feature{i + 1}' for i in range(len(X_train_only_text.columns))]
+    X_train_only_text.columns = new_column_names
+    X_test_only_text.columns = new_column_names
 
+    # Logistic regression
+    features = X_train_only_audio.columns
+    log_likelihoods = []
+
+    for feature in features:
+        # Prepare the feature data with an intercept
+        X = sm.add_constant(X_train_only_audio[feature])  # Adds a constant term to the feature
+        y = y_train
+
+        # Fit logistic regression model
+        model = sm.Logit(y_train, X).fit(disp=0)  # disp=0 turns off the fitting summary output
+
+        # Store the log-likelihood
+        log_likelihoods.append(model.llf)  # llf is the log likelihood of the fitted model
+
+    # Create a DataFrame to sort features by log-likelihood
+    results = pd.DataFrame({
+        'Feature': features,
+        'Log-Likelihood': log_likelihoods
+    }).sort_values(by='Log-Likelihood', ascending=True)
+
+    # import matplotlib.pyplot as plt
+    #
+    # # Assuming 'results' DataFrame from your code is already prepared and sorted
+    #
+    # # Plotting
+    # plt.figure(figsize=(10, 8))
+    # # Scatter plot where we use the index as the y-value and log-likelihood as the x-value
+    # plt.scatter(results['Log-Likelihood'], range(len(results['Feature'])), color='b')
+    #
+    # # Setting the y-ticks to show feature names
+    # plt.yticks(range(len(results['Feature'])), results['Feature'])
+    #
+    # plt.title('Log-Likelihood of Logistic Regression Models by Feature')
+    # plt.xlabel('Log-Likelihood')
+    # plt.ylabel('Feature')
+    # plt.show()
+
+    # Select the best audio features
+    best_audio_features = results.tail(15)['Feature'].values.tolist()
+    X_train_only_audio = X_train_only_audio[best_audio_features]
+    X_test_only_audio = X_test_only_audio[best_audio_features]
+
+    # Combine text and audio features
     X_train_text_and_audio = pd.concat([X_train_only_audio, X_train_only_text], axis=1)
     X_test_text_and_audio = pd.concat([X_test_only_audio, X_test_only_text], axis=1)
 
-    dtrain_audio = xgb.DMatrix(X_train_only_audio, label=y_train)
-    dtest_audio = xgb.DMatrix(X_test_only_audio, label=y_test)
-
-    dtrain_text = xgb.DMatrix(X_train_only_text, label=y_train)
-    dtest_text = xgb.DMatrix(X_test_only_text, label=y_test)
-
-    dtrain_text_audio = xgb.DMatrix(X_train_text_and_audio, label=y_train)
-    dtest_text_audio = xgb.DMatrix(X_test_text_and_audio, label=y_test)
-
     # Set up parameters for xgboost
-    params = {
-        'max_depth': 6,  # you can tune this and other parameters
-        'eta': 0.3,  # learning rate
-        'objective': 'multi:softprob',  # multi-class classification
-        'num_class': 3  # number of classes
+    param_grid = {
+        'max_depth': [3, 6, 9],
+        'eta': [0.1, 0.3, 0.5],
+        'subsample': [0.5, 0.7, 1.0],
+        'colsample_bytree': [0.5, 0.7, 1.0],
+        'objective': ['binary:logistic']  # set the objective for binary classification
     }
 
-    num_boost_round = 100
-    bst_audion = xgb.train(params, dtrain_audio, num_boost_round)
-    preds = bst_audion.predict(dtest_audio)
-    predictions_audio = np.asarray([np.argmax(line) for line in preds])
+    xgb_model = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss')
+    grid_search_text = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='accuracy', cv=3, verbose=1)
+    grid_search_audio = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='accuracy', cv=3, verbose=1)
+    grid_search_audio_text = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='accuracy', cv=3, verbose=1)
 
-    bst_text = xgb.train(params, dtrain_text, num_boost_round)
-    preds = bst_text.predict(dtest_text)
-    predictions_text = np.asarray([np.argmax(line) for line in preds])
+    grid_search_text.fit(X_train_only_text, y_train)
+    grid_search_audio.fit(X_train_only_audio, y_train)
+    grid_search_audio_text.fit(X_train_text_and_audio, y_train)
 
-    bst_text_audio = xgb.train(params, dtrain_text_audio, num_boost_round)
-    preds = bst_text_audio.predict(dtest_text_audio)
-    predictions_text_audio = np.asarray([np.argmax(line) for line in preds])
+    best_xgb_model_text = grid_search_text.best_estimator_
+    best_xgb_model_audio = grid_search_audio.best_estimator_
+    best_xgb_model_audio_text = grid_search_audio_text.best_estimator_
+
+    x_preds_audio_text = best_xgb_model_audio_text.predict(X_test_text_and_audio)
+    x_preds_text = best_xgb_model_text.predict(X_test_only_text)
+    x_preds_audio = best_xgb_model_audio.predict(X_test_only_audio)
 
     # Evaluate predictions
-    accuracy_audio = accuracy_score(y_test, predictions_audio)
+    accuracy_audio = accuracy_score(y_test, x_preds_audio)
     print("Accuracy only audio features: %.2f%%" % (accuracy_audio * 100.0))
 
-    accuracy_text = accuracy_score(y_test, predictions_text)
+    accuracy_text = accuracy_score(y_test, x_preds_text)
     print("Accuracy only text features: %.2f%%" % (accuracy_text * 100.0))
 
-    accuracy_text_audio = accuracy_score(y_test, predictions_text_audio)
+    accuracy_text_audio = accuracy_score(y_test, x_preds_audio_text)
     print("Accuracy text and audio features: %.2f%%" % (accuracy_text_audio * 100.0))
