@@ -13,3 +13,4 @@ stop-words==2018.7.23
 xgboost==2.0.3
 gensim==4.3.2
 statsmodels==0.14.2
+scipy==1.10.1

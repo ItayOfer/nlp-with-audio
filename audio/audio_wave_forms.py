@@ -40,24 +40,24 @@ class AudioWaveformsConverter:
 
         # Initialize the feature dictionary
         features = {
-            'centroid_mean': np.mean(spectral_centroid),
-            'bandwidth_mean': np.mean(spectral_bandwidth),
-            'flatness_mean': np.mean(spectral_flatness),
-            'rolloff_mean': np.mean(spectral_rolloff),
-            'rms_energy_mean': np.mean(rms_energy),
-            'zcr_mean': np.mean(zcr),
-            'tempo': tempo,
-            'tempogram_mean': np.mean(tempogram),
-            'tempogram_ratio_mean': np.mean(tempogram_ratio),
-            'tonnetz_mean': np.mean(tonnetz)
+            'audio_feature_centroid_mean': np.mean(spectral_centroid),
+            'audio_feature_bandwidth_mean': np.mean(spectral_bandwidth),
+            'audio_feature_flatness_mean': np.mean(spectral_flatness),
+            'audio_feature_rolloff_mean': np.mean(spectral_rolloff),
+            'audio_feature_rms_energy_mean': np.mean(rms_energy),
+            'audio_feature_zcr_mean': np.mean(zcr),
+            'audio_feature_tempo': tempo,
+            'audio_feature_tempogram_mean': np.mean(tempogram),
+            'audio_feature_tempogram_ratio_mean': np.mean(tempogram_ratio),
+            'audio_feature_tonnetz_mean': np.mean(tonnetz)
         }
 
         # Adding MFCCs and Chroma features
         for i in range(mfccs.shape[0]):
-            features[f'mfccs_mean_{i}'] = np.mean(mfccs[i, :])
+            features[f'audio_feature_mfccs_mean_{i}'] = np.mean(mfccs[i, :])
 
         for i in range(chroma.shape[0]):
-            features[f'chroma_mean_{i}'] = np.mean(chroma[i, :])
+            features[f'audio_feature_chroma_mean_{i}'] = np.mean(chroma[i, :])
 
         return features
 
@@ -71,7 +71,7 @@ class AudioWaveformsConverter:
         for scene_id, data in audio_dict.items():
             waveform = data['waveforms'][0].numpy()  # Ensure waveform is a NumPy array
             features = self.extract_features(waveform)
-            features['scene_id'] = scene_id  # Add scene_id to the features dictionary
+            features['file_key'] = scene_id  # Add scene_id to the features dictionary
             feature_list.append(features)
             print(f'{cnt} done out of {dict_len}')
             cnt += 1
