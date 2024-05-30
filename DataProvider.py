@@ -22,6 +22,7 @@ class DataProvider:
         self.audio_path_dict = {'dev': self.audio_dev_path,
                                 'test': self.audio_test_path,
                                 'train': self.audio_train_path}
+
         self.unsuccessful_file_names = {'train': [], 'dev': [], 'test': []}
 
     def run(self):
