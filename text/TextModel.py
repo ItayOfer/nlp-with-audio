@@ -113,25 +113,22 @@ def sentence_to_vec(df, embedding_model):
 def clean_stop_words_and_special_characters_and_set_target(df: pd.DataFrame):
     text_cleaner = TextCleaner()
     df['tokens'] = text_cleaner.apply_cleaner(df['Utterance'])
-    df['labels'] = df['labels'].replace({'negative': 0, 'neutral': 1, 'positive': 0})
+    df['labels'] = df['Sentiment'].replace({'negative': 0, 'neutral': 1, 'positive': 0})
     df = df.dropna(subset=['tokens'])
     return df
 
 
 class TextModel:
-    def __init__(self, common_ids: list):
+    def __init__(self):
         self.glove_model = api.load("glove-wiki-gigaword-100")
-        self.common_ids = common_ids
 
     def preprocessing(self, df):
         df = clean_stop_words_and_special_characters_and_set_target(df)
         df = utils.file_key_generator(df)
         df = df.set_index('file_key')
         sentence_vectors = sentence_to_vec(df, self.glove_model)
-        y = df_train.loc[self.common_ids, 'labels']
-        X = sentence_vectors.loc[self.common_ids]
-        X.columns = [f'Feature{i + 1}' for i in range(len(X.columns))]
-        return X, y
+        sentence_vectors.columns = [f'text_feautre_{i + 1}' for i in range(len(sentence_vectors.columns))]
+        return sentence_vectors, df['labels']
 
 
 if __name__ == '__main__':
