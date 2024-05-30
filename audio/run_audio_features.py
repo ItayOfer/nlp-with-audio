@@ -1,6 +1,6 @@
 import pickle
-from AudioFeaturesExtraction.audio_features_extractor import AudioFeaturesExtractor
-from AudioFeaturesExtraction.audio_wave_forms import AudioWaveformsConverter
+from audio.audio_features_extractor import AudioFeaturesExtractor
+from audio.audio_wave_forms import AudioWaveformsConverter
 
 
 def run_audio_fe():

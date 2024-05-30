@@ -1,6 +1,6 @@
 import pandas as pd
 from torch.utils.data import DataLoader
-from AudioFeaturesExtraction.audio_dataset import AudioDataset
+from audio.audio_dataset import AudioDataset
 import os
 
 
