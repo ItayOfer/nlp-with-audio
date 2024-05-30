@@ -66,12 +66,15 @@ class AudioWaveformsConverter:
         Process each audio scene, extract features, and compile them into a single DataFrame.
         """
         feature_list = []
-
+        dict_len = len(audio_dict)
+        cnt = 1
         for scene_id, data in audio_dict.items():
             waveform = data['waveforms'][0].numpy()  # Ensure waveform is a NumPy array
             features = self.extract_features(waveform)
             features['scene_id'] = scene_id  # Add scene_id to the features dictionary
             feature_list.append(features)
+            print(f'{cnt} done out of {dict_len}')
+            cnt += 1
 
         # Create a DataFrame from the list of feature dictionaries
         combined_features_df = pd.DataFrame(feature_list)
