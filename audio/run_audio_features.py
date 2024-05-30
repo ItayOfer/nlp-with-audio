@@ -34,18 +34,20 @@ def run_audio_waveform(sample_rate=16000):
     dev = AudioWaveformsConverter('dev_data.pkl', sample_rate)
     print('train start')
     train_audio_df = train.run()
+    train_audio_df.to_csv('train_fe.csv', index_label=False)
     print('train done')
+
     print('test start')
     test_audio_df = test.run()
+    test_audio_df.to_csv('test_fe.csv', index_label=False)
     print('test done')
+
     print('dev start')
     dev_audio_df = dev.run()
+    dev_audio_df.to_csv('dev_fe.csv', index_label=False)
     print('dev done')
-    dev_audio_df.to_csv('dev_fe.csv')
-    train_audio_df.to_csv('train_fe.csv')
-    test_audio_df.to_csv('test_fe.csv')
 
 
 if __name__ == '__main__':
-    # run_audio_fe()  # create the dict files and saves them as a pickle file
+    run_audio_fe()  # create the dict files and saves them as a pickle file
     run_audio_waveform()  # create the csv data files

@@ -1,3 +1,5 @@
+from typing import List
+
 from sklearn.metrics import accuracy_score
 import librosa
 import numpy as np
@@ -7,11 +9,14 @@ from stop_words import get_stop_words
 
 import nltk
 
+import utils
+
 nltk.download('punkt')
 import gensim.downloader as api
 import re
 import xgboost as xgb
 import statsmodels.api as sm
+
 
 class TextCleaner:
     def __init__(self, language='en'):
@@ -33,10 +38,6 @@ class TextCleaner:
 
     def apply_cleaner(self, text_series: pd.Series) -> pd.Series:
         return text_series.apply(self._clean)
-
-    def set_target(self, target: pd.Series) -> pd.Series:
-        res = target.replace({'negative': 0, 'neutral': 1, 'positive': 0})
-        return res
 
 
 def sentence_to_vec(sentence_list, embedding_model):
@@ -88,6 +89,7 @@ def extract_features(waveform, sr):
 
     return features
 
+
 def sentence_to_vec(df, embedding_model):
     vec_list = []
     for index, row in df.iterrows():
@@ -108,29 +110,45 @@ def sentence_to_vec(df, embedding_model):
     return vec_df
 
 
-if __name__ == '__main__':
-    df_train = pd.read_csv('MELD.Raw/train/train_sent_emo.csv')
-    df_dev = pd.read_csv('MELD.Raw/dev_sent_emo.csv')
-    df_test = pd.read_csv('MELD.Raw/test_sent_emo.csv')
+def clean_stop_words_and_special_characters_and_set_target(df: pd.DataFrame):
     text_cleaner = TextCleaner()
-    # clean stop words and special characters
-    df_train['tokens'] = text_cleaner.apply_cleaner(df_train['Utterance'])
-    df_dev['tokens'] = text_cleaner.apply_cleaner(df_dev['Utterance'])
-    df_test['tokens'] = text_cleaner.apply_cleaner(df_test['Utterance'])
-    df_train = df_train.dropna(subset=['tokens'])
-    df_dev = df_dev.dropna(subset=['tokens'])
-    df_test = df_test.dropna(subset=['tokens'])
-    # set key
-    df_train['scene_id'] = 'dia' + df_train['Dialogue_ID'].astype(str) + '_' + 'utt' + df_train['Utterance_ID'].astype(
-        str)
-    df_test['scene_id'] = 'dia' + df_test['Dialogue_ID'].astype(str) + '_' + 'utt' + df_test['Utterance_ID'].astype(str)
-    df_train = df_train.set_index('scene_id')
-    df_test = df_test.set_index('scene_id')
+    df['tokens'] = text_cleaner.apply_cleaner(df['Utterance'])
+    df['labels'] = df['labels'].replace({'negative': 0, 'neutral': 1, 'positive': 0})
+    df = df.dropna(subset=['tokens'])
+    return df
 
-    # set target
-    df_train['labels'] = text_cleaner.set_target(df_train['Sentiment'])
-    df_dev['labels'] = text_cleaner.set_target(df_dev['Sentiment'])
-    df_test['labels'] = text_cleaner.set_target(df_test['Sentiment'])
+
+class TextModel:
+    def __init__(self, common_ids: list):
+        self.glove_model = api.load("glove-wiki-gigaword-100")
+        self.common_ids = common_ids
+
+    def preprocessing(self, df):
+        df = clean_stop_words_and_special_characters_and_set_target(df)
+        df = utils.file_key_generator(df)
+        df = df.set_index('file_key')
+        sentence_vectors = sentence_to_vec(df, self.glove_model)
+        y = df_train.loc[self.common_ids, 'labels']
+        X = sentence_vectors.loc[self.common_ids]
+        X.columns = [f'Feature{i + 1}' for i in range(len(X.columns))]
+        return X, y
+
+
+if __name__ == '__main__':
+    df_train = pd.read_csv('../MELD.Raw/train/train_sent_emo.csv')
+    df_dev = pd.read_csv('../MELD.Raw/dev_sent_emo.csv')
+    df_test = pd.read_csv('../MELD.Raw/test_sent_emo.csv')
+    df_train = pd.concat([df_train, df_dev], axis=1)
+
+    # clean stop words and special characters
+    df_train = clean_stop_words_and_special_characters_and_set_target(df_train)
+    df_test = clean_stop_words_and_special_characters_and_set_target(df_test)
+    # set key
+    df_train = utils.file_key_generator(df_train)
+    df_test = utils.file_key_generator(df_test)
+
+    df_train = df_train.set_index('file_key')
+    df_test = df_test.set_index('file_key')
 
     glove_model = api.load("glove-wiki-gigaword-100")
     sentence_vectors_test = sentence_to_vec(df_test, glove_model)
@@ -218,7 +236,8 @@ if __name__ == '__main__':
     xgb_model = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss')
     grid_search_text = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='accuracy', cv=3, verbose=1)
     grid_search_audio = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='accuracy', cv=3, verbose=1)
-    grid_search_audio_text = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='accuracy', cv=3, verbose=1)
+    grid_search_audio_text = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='accuracy', cv=3,
+                                          verbose=1)
 
     grid_search_text.fit(X_train_only_text, y_train)
     grid_search_audio.fit(X_train_only_audio, y_train)
@@ -245,6 +264,7 @@ if __name__ == '__main__':
     import pandas as pd
     import seaborn as sns
     import matplotlib.pyplot as plt
+
 
     def plot_feature_distribution(train_df, test_df):
         features = train_df.columns

@@ -1,5 +1,7 @@
 import pandas as pd
 from torch.utils.data import DataLoader
+
+import utils
 from audio.audio_dataset import AudioDataset
 import os
 
@@ -25,14 +27,12 @@ class AudioFeaturesExtractor:
         files_paths = [os.path.join(self.path, file) for file in sorted_files]
         return files_paths
 
-    def file_key_generator(self):
-        info_file = pd.read_csv(self.info_file_name)
+    def file_key_generator(self, df: pd.DataFrame):
         # Creating file_key which is a unique identifier for each scene.
-        info_file['file_key'] = 'dia' + info_file['Dialogue_ID'].astype(str) + '_' + 'utt' + info_file[
-            'Utterance_ID'].astype(str)
+        df = utils.file_key_generator(df)
 
-        info_file['label'] = info_file['Sentiment'].map(self.labels_dict)
-        info_file = info_file.sort_values(by='file_key')
+        df['label'] = df['Sentiment'].map(self.labels_dict)
+        info_file = df.sort_values(by='file_key')
         return info_file
 
     @staticmethod
