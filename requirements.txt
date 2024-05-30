@@ -9,3 +9,7 @@ numpy~=1.26.4
 torch~=2.2.2
 torchaudio~=2.2.2
 seaborn~=0.13.2
+stop-words==2018.7.23
+xgboost==2.0.3
+gensim==4.3.2
+statsmodels==0.14.2
