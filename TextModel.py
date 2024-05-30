@@ -1,20 +1,10 @@
-import pickle
-
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score
 import librosa
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import GridSearchCV
 from stop_words import get_stop_words
-from sklearn.linear_model import LogisticRegression
 
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset
-from torch.nn.utils.rnn import pad_sequence
-from collections import Counter
-from nltk.tokenize import word_tokenize
 import nltk
 
 nltk.download('punkt')
@@ -98,23 +88,6 @@ def extract_features(waveform, sr):
 
     return features
 
-
-def process_audio_data(audio_dict, sample_rate):
-    """
-    Process each audio scene, extract features, and compile them into a single DataFrame.
-    """
-    feature_list = []
-
-    for scene_id, data in audio_dict.items():
-        waveform = data['waveforms'][0].numpy()  # Ensure waveform is a NumPy array
-        features = extract_features(waveform, sample_rate)
-        features['scene_id'] = scene_id  # Add scene_id to the features dictionary
-        feature_list.append(features)
-
-    # Create a DataFrame from the list of feature dictionaries
-    combined_features_df = pd.DataFrame(feature_list)
-    return combined_features_df
-
 def sentence_to_vec(df, embedding_model):
     vec_list = []
     for index, row in df.iterrows():
@@ -163,16 +136,6 @@ if __name__ == '__main__':
     sentence_vectors_test = sentence_to_vec(df_test, glove_model)
     sentence_vectors_train = sentence_to_vec(df_train, glove_model)
 
-    ## ---- make audio fearues ----
-    # with open('audio/train_data.pkl', 'rb') as file:
-    #     train_audio_dict = pickle.load(file)
-    #
-    # with open('audio/test_data.pkl', 'rb') as file:
-    #     test_audio_dict = pickle.load(file)
-
-    # sample_rate = 44100
-    # audio_feature_train = process_audio_data(train_audio_dict, sample_rate)
-    # audio_feature_test = process_audio_data(test_audio_dict, sample_rate)
     audio_feature_train = pd.read_csv('train_fe.csv')
     audio_feature_test = pd.read_csv('test_fe.csv')
     audio_feature_train = audio_feature_train.set_index('scene_id')
