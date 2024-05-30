@@ -1,0 +1,301 @@
+import pickle
+
+from sklearn.metrics import accuracy_score, classification_report
+import librosa
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import GridSearchCV
+from stop_words import get_stop_words
+from sklearn.linear_model import LogisticRegression
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, Dataset
+from torch.nn.utils.rnn import pad_sequence
+from collections import Counter
+from nltk.tokenize import word_tokenize
+import nltk
+
+nltk.download('punkt')
+import gensim.downloader as api
+import re
+import xgboost as xgb
+import statsmodels.api as sm
+
+class TextCleaner:
+    def __init__(self, language='en'):
+        # Get a list of English stop words
+        self.stop_words = get_stop_words(language)
+
+    def _clean(self, text: str) -> str | None:
+        # Convert text to lowercase
+        text = text.lower()
+        # Remove special characters and digits
+        text = re.sub(r'[^a-zA-Z0-9\s.,!?-]', '', text)
+
+        # Optionally, remove stop words
+        text_tokens = text.split()
+        filtered_text = ' '.join([word for word in text_tokens if word not in self.stop_words and len(word) > 1])
+        if len(filtered_text) == 0:
+            return None
+        return filtered_text
+
+    def apply_cleaner(self, text_series: pd.Series) -> pd.Series:
+        return text_series.apply(self._clean)
+
+    def set_target(self, target: pd.Series) -> pd.Series:
+        res = target.replace({'negative': 0, 'neutral': 1, 'positive': 0})
+        return res
+
+
+def sentence_to_vec(sentence_list, embedding_model):
+    vec_list = []
+    for sentence in sentence_list:
+        word_vectors = []
+        for word in sentence.split():
+            try:
+                word_vectors.append(embedding_model[word])
+            except KeyError:
+                continue  # Skip words not in the vocabulary
+        if word_vectors:
+            vec_list.append(np.mean(word_vectors, axis=0))
+        else:
+            vec_list.append(np.zeros(100))  # Assuming 100 dimensional embeddings
+    return np.array(vec_list)
+
+
+def extract_features(waveform, sr):
+    """
+    Calculate various spectral features and return them in a dictionary.
+    """
+    # Basic spectral features
+    spectral_centroid = librosa.feature.spectral_centroid(y=waveform, sr=sr)[0]
+    spectral_bandwidth = librosa.feature.spectral_bandwidth(y=waveform, sr=sr)[0]
+    spectral_flatness = librosa.feature.spectral_flatness(y=waveform)[0]
+    spectral_rolloff = librosa.feature.spectral_rolloff(y=waveform, sr=sr)[0]
+    rms_energy = librosa.feature.rms(y=waveform)[0]
+    zcr = librosa.feature.zero_crossing_rate(waveform)[0]
+    mfccs = librosa.feature.mfcc(y=waveform, sr=sr)
+    chroma = librosa.feature.chroma_stft(y=waveform, sr=sr)
+
+    # Initialize the feature dictionary
+    features = {
+        'centroid_mean': np.mean(spectral_centroid),
+        'bandwidth_mean': np.mean(spectral_bandwidth),
+        'flatness_mean': np.mean(spectral_flatness),
+        'rolloff_mean': np.mean(spectral_rolloff),
+        'rms_energy_mean': np.mean(rms_energy),
+        'zcr_mean': np.mean(zcr)
+    }
+
+    # Adding MFCCs and Chroma features
+    for i in range(mfccs.shape[0]):  # Assuming MFCCs are returned with shape (n_mfcc, t)
+        features[f'mfccs_mean_{i}'] = np.mean(mfccs[i, :])
+
+    for i in range(chroma.shape[0]):  # Assuming Chroma features are returned with shape (n_chroma, t)
+        features[f'chroma_mean_{i}'] = np.mean(chroma[i, :])
+
+    return features
+
+
+def process_audio_data(audio_dict, sample_rate):
+    """
+    Process each audio scene, extract features, and compile them into a single DataFrame.
+    """
+    feature_list = []
+
+    for scene_id, data in audio_dict.items():
+        waveform = data['waveforms'][0].numpy()  # Ensure waveform is a NumPy array
+        features = extract_features(waveform, sample_rate)
+        features['scene_id'] = scene_id  # Add scene_id to the features dictionary
+        feature_list.append(features)
+
+    # Create a DataFrame from the list of feature dictionaries
+    combined_features_df = pd.DataFrame(feature_list)
+    return combined_features_df
+
+def sentence_to_vec(df, embedding_model):
+    vec_list = []
+    for index, row in df.iterrows():
+        sentence = row['tokens']  # Directly using the 'tokens' column
+        word_vectors = []
+        for word in sentence.split():
+            try:
+                word_vectors.append(embedding_model[word])
+            except KeyError:
+                continue  # Skip words not in the vocabulary
+        if word_vectors:
+            vec_list.append(np.mean(word_vectors, axis=0))
+        else:
+            vec_list.append(np.zeros(100))  # Assuming 100 dimensional embeddings
+
+    # Create a DataFrame from the list of vectors and preserve the original index
+    vec_df = pd.DataFrame(vec_list, index=df.index)
+    return vec_df
+
+
+if __name__ == '__main__':
+    df_train = pd.read_csv('MELD.Raw/train/train_sent_emo.csv')
+    df_dev = pd.read_csv('MELD.Raw/dev_sent_emo.csv')
+    df_test = pd.read_csv('MELD.Raw/test_sent_emo.csv')
+    text_cleaner = TextCleaner()
+    # clean stop words and special characters
+    df_train['tokens'] = text_cleaner.apply_cleaner(df_train['Utterance'])
+    df_dev['tokens'] = text_cleaner.apply_cleaner(df_dev['Utterance'])
+    df_test['tokens'] = text_cleaner.apply_cleaner(df_test['Utterance'])
+    df_train = df_train.dropna(subset=['tokens'])
+    df_dev = df_dev.dropna(subset=['tokens'])
+    df_test = df_test.dropna(subset=['tokens'])
+    # set key
+    df_train['scene_id'] = 'dia' + df_train['Dialogue_ID'].astype(str) + '_' + 'utt' + df_train['Utterance_ID'].astype(
+        str)
+    df_test['scene_id'] = 'dia' + df_test['Dialogue_ID'].astype(str) + '_' + 'utt' + df_test['Utterance_ID'].astype(str)
+    df_train = df_train.set_index('scene_id')
+    df_test = df_test.set_index('scene_id')
+
+    # set target
+    df_train['labels'] = text_cleaner.set_target(df_train['Sentiment'])
+    df_dev['labels'] = text_cleaner.set_target(df_dev['Sentiment'])
+    df_test['labels'] = text_cleaner.set_target(df_test['Sentiment'])
+
+    glove_model = api.load("glove-wiki-gigaword-100")
+    sentence_vectors_test = sentence_to_vec(df_test, glove_model)
+    sentence_vectors_train = sentence_to_vec(df_train, glove_model)
+
+    ## ---- make audio fearues ----
+    # with open('AudioFeaturesExtraction/train_data.pkl', 'rb') as file:
+    #     train_audio_dict = pickle.load(file)
+    #
+    # with open('AudioFeaturesExtraction/test_data.pkl', 'rb') as file:
+    #     test_audio_dict = pickle.load(file)
+
+    # sample_rate = 44100
+    # audio_feature_train = process_audio_data(train_audio_dict, sample_rate)
+    # audio_feature_test = process_audio_data(test_audio_dict, sample_rate)
+    audio_feature_train = pd.read_csv('train_fe.csv')
+    audio_feature_test = pd.read_csv('test_fe.csv')
+    audio_feature_train = audio_feature_train.set_index('scene_id')
+    audio_feature_test = audio_feature_test.set_index('scene_id')
+
+    common_ids_train = list(set(audio_feature_train.index).intersection(set(df_train.index)))
+    common_ids_test = list(set(audio_feature_test.index).intersection(set(df_test.index)))
+    y_train = df_train.loc[common_ids_train, 'labels']
+    y_test = df_test.loc[common_ids_test, 'labels']
+
+    # set 3 dfs
+
+    X_train_only_audio = audio_feature_train.loc[common_ids_train]
+    X_test_only_audio = audio_feature_test.loc[common_ids_test]
+    X_train_only_audio = X_train_only_audio.drop(columns='Unnamed: 0')
+    X_test_only_audio = X_test_only_audio.drop(columns='Unnamed: 0')
+
+    X_train_only_text = sentence_vectors_train.loc[common_ids_train]
+    X_test_only_text = sentence_vectors_test.loc[common_ids_test]
+    new_column_names = [f'Feature{i + 1}' for i in range(len(X_train_only_text.columns))]
+    X_train_only_text.columns = new_column_names
+    X_test_only_text.columns = new_column_names
+
+    # Logistic regression
+    features = X_train_only_audio.columns
+    log_likelihoods = []
+
+    for feature in features:
+        # Prepare the feature data with an intercept
+        X = sm.add_constant(X_train_only_audio[feature])  # Adds a constant term to the feature
+        y = y_train
+
+        # Fit logistic regression model
+        model = sm.Logit(y_train, X).fit(disp=0)  # disp=0 turns off the fitting summary output
+
+        # Store the log-likelihood
+        log_likelihoods.append(model.llf)  # llf is the log likelihood of the fitted model
+
+    # Create a DataFrame to sort features by log-likelihood
+    results = pd.DataFrame({
+        'Feature': features,
+        'Log-Likelihood': log_likelihoods
+    }).sort_values(by='Log-Likelihood', ascending=True)
+
+    # import matplotlib.pyplot as plt
+    #
+    # # Assuming 'results' DataFrame from your code is already prepared and sorted
+    #
+    # # Plotting
+    # plt.figure(figsize=(10, 8))
+    # # Scatter plot where we use the index as the y-value and log-likelihood as the x-value
+    # plt.scatter(results['Log-Likelihood'], range(len(results['Feature'])), color='b')
+    #
+    # # Setting the y-ticks to show feature names
+    # plt.yticks(range(len(results['Feature'])), results['Feature'])
+    #
+    # plt.title('Log-Likelihood of Logistic Regression Models by Feature')
+    # plt.xlabel('Log-Likelihood')
+    # plt.ylabel('Feature')
+    # plt.show()
+
+    # Select the best audio features
+    best_audio_features = results.tail(15)['Feature'].values.tolist()
+    X_train_only_audio = X_train_only_audio[best_audio_features]
+    X_test_only_audio = X_test_only_audio[best_audio_features]
+
+    # Combine text and audio features
+    X_train_text_and_audio = pd.concat([X_train_only_audio, X_train_only_text], axis=1)
+    X_test_text_and_audio = pd.concat([X_test_only_audio, X_test_only_text], axis=1)
+
+    # Set up parameters for xgboost
+    param_grid = {
+        'max_depth': [3, 6, 9],
+        'eta': [0.1, 0.3, 0.5],
+        'subsample': [0.5, 0.7, 1.0],
+        'colsample_bytree': [0.5, 0.7, 1.0],
+        'objective': ['binary:logistic']  # set the objective for binary classification
+    }
+
+    xgb_model = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss')
+    grid_search_text = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='accuracy', cv=3, verbose=1)
+    grid_search_audio = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='accuracy', cv=3, verbose=1)
+    grid_search_audio_text = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='accuracy', cv=3, verbose=1)
+
+    grid_search_text.fit(X_train_only_text, y_train)
+    grid_search_audio.fit(X_train_only_audio, y_train)
+    grid_search_audio_text.fit(X_train_text_and_audio, y_train)
+
+    best_xgb_model_text = grid_search_text.best_estimator_
+    best_xgb_model_audio = grid_search_audio.best_estimator_
+    best_xgb_model_audio_text = grid_search_audio_text.best_estimator_
+
+    x_preds_audio_text = best_xgb_model_audio_text.predict(X_test_text_and_audio)
+    x_preds_text = best_xgb_model_text.predict(X_test_only_text)
+    x_preds_audio = best_xgb_model_audio.predict(X_test_only_audio)
+
+    # Evaluate predictions
+    accuracy_audio = accuracy_score(y_test, x_preds_audio)
+    print("Accuracy only audio features: %.2f%%" % (accuracy_audio * 100.0))
+
+    accuracy_text = accuracy_score(y_test, x_preds_text)
+    print("Accuracy only text features: %.2f%%" % (accuracy_text * 100.0))
+
+    accuracy_text_audio = accuracy_score(y_test, x_preds_audio_text)
+    print("Accuracy text and audio features: %.2f%%" % (accuracy_text_audio * 100.0))
+
+    import pandas as pd
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+
+    def plot_feature_distribution(train_df, test_df):
+        features = train_df.columns
+
+        for feature in features:
+            plt.figure(figsize=(12, 6))
+            sns.kdeplot(train_df[feature], label='Train', fill=True, color='blue', alpha=0.5)
+            sns.kdeplot(test_df[feature], label='Test', fill=True, color='red', alpha=0.5)
+
+            plt.title(f'Distribution of {feature}')
+            plt.xlabel(feature)
+            plt.ylabel('Density')
+            plt.legend()
+            plt.show()
+
+
+    plot_feature_distribution(X_train_text_and_audio, X_test_text_and_audio)
