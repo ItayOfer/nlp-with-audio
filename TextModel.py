@@ -164,10 +164,10 @@ if __name__ == '__main__':
     sentence_vectors_train = sentence_to_vec(df_train, glove_model)
 
     ## ---- make audio fearues ----
-    # with open('AudioFeaturesExtraction/train_data.pkl', 'rb') as file:
+    # with open('audio/train_data.pkl', 'rb') as file:
     #     train_audio_dict = pickle.load(file)
     #
-    # with open('AudioFeaturesExtraction/test_data.pkl', 'rb') as file:
+    # with open('audio/test_data.pkl', 'rb') as file:
     #     test_audio_dict = pickle.load(file)
 
     # sample_rate = 44100
