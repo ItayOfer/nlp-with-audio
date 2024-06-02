@@ -5,6 +5,7 @@ class FeatureEngineering:
     def __init__(self, path: str, speaker_combinations=None):
         self.path = path
         self.speaker_combinations = speaker_combinations if speaker_combinations is not None else {}
+        self.top_speakers = []
 
     @staticmethod
     def calculate_utterance_length(data):
@@ -45,7 +46,13 @@ class FeatureEngineering:
         data['Total_Speakers_id'] = data['Speaker_unique'].apply(lambda x: self.speaker_combinations.get(tuple(x), 0))
         return data
 
-    def run(self, data=None):
+    def find_to_speakers(self, data):
+        ...
+
+    def convert_speakers_to_binary(self, data):
+        ...
+
+    def run(self, data=None, train=True):
         """
         Runs the entire feature engineering
         """
@@ -55,6 +62,9 @@ class FeatureEngineering:
         data = self.calculate_utterance_word_length(data)
         data = self.dialogue_speakers(data)
         data = self.total_speakers_id(data)
+        if train:
+            self.find_to_speakers(data)
+        data = self.convert_speakers_to_binary(data)
         return data
 
 if __name__ == '__main__':
