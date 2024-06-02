@@ -54,7 +54,7 @@ def get_data():
     train_data = concat_text_audio(audio_train, text_train, y_train)
     dev_data = concat_text_audio(audio_dev, text_dev, y_dev)
     test_data = concat_text_audio(audio_test, text_test, y_test)
-    train_data = pd.concat([train_data, dev_data], axis=0)
+    # train_data = pd.concat([train_data, dev_data], axis=0)
     y_train = train_data['labels']
     train_data = train_data.drop(columns='labels')
     test_data = test_data.drop(columns='labels')
