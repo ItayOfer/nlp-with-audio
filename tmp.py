@@ -12,6 +12,7 @@ def get_audio_data():
     audio_test = audio_test.set_index('file_key')
     return audio_train, audio_dev, audio_test
 
+
 def get_text_data_and_labels():
     text_model = TextModel()
     text_train = pd.read_csv('MELD.Raw/train/train_sent_emo.csv')
@@ -20,6 +21,13 @@ def get_text_data_and_labels():
     X_train_text, y_train = text_model.preprocessing(text_train)
     X_dev_text, y_dev = text_model.preprocessing(text_dev)
     X_test_text, y_test = text_model.preprocessing(text_test)
-    return text_train, text_dev, text_test
-def concat_text_audio():
-    ...
+    return X_train_text, X_dev_text, X_test_text, y_train, y_dev, y_test
+
+
+def concat_text_audio(audio: pd.DataFrame, text: pd.DataFrame, y: pd.Series):
+    return pd.concat([audio, text, y], axis=1)
+
+
+
+
+

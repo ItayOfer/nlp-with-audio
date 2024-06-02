@@ -132,51 +132,13 @@ class TextModel:
 
 
 if __name__ == '__main__':
-    df_train = pd.read_csv('../MELD.Raw/train/train_sent_emo.csv')
-    df_dev = pd.read_csv('../MELD.Raw/dev_sent_emo.csv')
-    df_test = pd.read_csv('../MELD.Raw/test_sent_emo.csv')
-    df_train = pd.concat([df_train, df_dev], axis=1)
-
-    # clean stop words and special characters
-    df_train = clean_stop_words_and_special_characters_and_set_target(df_train)
-    df_test = clean_stop_words_and_special_characters_and_set_target(df_test)
-    # set key
-    df_train = utils.file_key_generator(df_train)
-    df_test = utils.file_key_generator(df_test)
-
-    df_train = df_train.set_index('file_key')
-    df_test = df_test.set_index('file_key')
-
-    glove_model = api.load("glove-wiki-gigaword-100")
-    sentence_vectors_test = sentence_to_vec(df_test, glove_model)
-    sentence_vectors_train = sentence_to_vec(df_train, glove_model)
-
-    audio_feature_train = pd.read_csv('train_fe.csv')
-    audio_feature_test = pd.read_csv('test_fe.csv')
-    audio_feature_train = audio_feature_train.set_index('scene_id')
-    audio_feature_test = audio_feature_test.set_index('scene_id')
-
-    common_ids_train = list(set(audio_feature_train.index).intersection(set(df_train.index)))
-    common_ids_test = list(set(audio_feature_test.index).intersection(set(df_test.index)))
-    y_train = df_train.loc[common_ids_train, 'labels']
-    y_test = df_test.loc[common_ids_test, 'labels']
-
-    # set 3 dfs
-
-    X_train_only_audio = audio_feature_train.loc[common_ids_train]
-    X_test_only_audio = audio_feature_test.loc[common_ids_test]
-    X_train_only_audio = X_train_only_audio.drop(columns='Unnamed: 0')
-    X_test_only_audio = X_test_only_audio.drop(columns='Unnamed: 0')
-
-    X_train_only_text = sentence_vectors_train.loc[common_ids_train]
-    X_test_only_text = sentence_vectors_test.loc[common_ids_test]
-    new_column_names = [f'Feature{i + 1}' for i in range(len(X_train_only_text.columns))]
-    X_train_only_text.columns = new_column_names
-    X_test_only_text.columns = new_column_names
-
-    # Logistic regression
-    features = X_train_only_audio.columns
-    log_likelihoods = []
+    audio_train, audio_dev, audio_test = utils.get_audio_data()
+    text_train, text_dev, text_test, y_train, y_dev, y_test = utils.get_text_data_and_labels()
+    train_data = utils.concat_text_audio(audio_train, text_train, y_train)
+    dev_data = utils.concat_text_audio(audio_dev, text_dev, y_dev)
+    test_data = utils.concat_text_audio(audio_test, text_test, y_test)
+    train_data = pd.concat([train_data, dev_data], axis=0)
+    y_train = pd.concat([y_train, y_dev], axis=0)
 
     for feature in features:
         # Prepare the feature data with an intercept
