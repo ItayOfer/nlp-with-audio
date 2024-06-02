@@ -45,11 +45,12 @@ class FeatureEngineering:
         data['Total_Speakers_id'] = data['Speaker_unique'].apply(lambda x: self.speaker_combinations.get(tuple(x), 0))
         return data
 
-    def run(self):
+    def run(self, data=None):
         """
         Runs the entire feature engineering
         """
-        data = pd.read_csv(self.path)
+        if not data:
+            data = pd.read_csv(self.path)
         data = self.calculate_utterance_length(data)
         data = self.calculate_utterance_word_length(data)
         data = self.dialogue_speakers(data)
