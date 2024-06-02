@@ -1,12 +1,16 @@
 import pandas as pd
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import MinMaxScaler
+import lightgbm as lgb
 
 import utils
-import xgboost as xgb
 from sklearn.model_selection import GridSearchCV
 from feature_engineering import FeatureEngineering
-from mrmr import mrmr_classif
+from sklearn.feature_selection import RFE
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+
 
 if __name__ == '__main__':
     train_data, test_data, y_train, y_test = utils.get_data()
@@ -17,7 +21,7 @@ if __name__ == '__main__':
     dev_meld = pd.read_csv('../MELD.Raw/dev_sent_emo.csv')
     fe_dev_data = fe.run(dev_meld, train=False)
     fe_test_data = fe.run(test_meld, train=False)
-    fe_train_data = pd.concat([fe_train_data, fe_dev_data])
+    # fe_train_data = pd.concat([fe_train_data, fe_dev_data])
     common_indices = fe_train_data.index.intersection(y_train.index)
     fe_train_data = fe_train_data.loc[common_indices]
     X_train = train_data[text_feature_name]
@@ -25,6 +29,20 @@ if __name__ == '__main__':
     X_train = pd.merge(X_train, fe_train_data, left_index=True, right_index=True)
     X_test = pd.merge(X_test, fe_test_data, left_index=True, right_index=True)
     scaler = MinMaxScaler()
-    X_train = pd.DataFrame(scaler.fit_transform(X_train), columns=X_train.columns)
-    X_test = pd.DataFrame(scaler.transform(X_test), columns=X_train.columns)
+    pipeline = Pipeline([
+        ('scaler', MinMaxScaler()),
+        ('feature_selection', RFE(estimator=RandomForestClassifier(n_estimators=100, random_state=42))),
+        ('model', QuadraticDiscriminantAnalysis())
+    ])
+    param_grid = {
+        # 'feature_selection__n_features_to_select': [5],
+        'model__reg_param': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+        # 'model__max_depth': [5, 10, 15],
+        # 'model__learning_rate': [0.01, 0.05, 0.1],
+        # 'model__n_estimators': [50, 100, 200]
+    }
 
+    grid = GridSearchCV(pipeline, param_grid, cv=3, scoring='accuracy', verbose=1)
+    grid.fit(X_train, y_train)
+    print("Best parameters:", grid.best_params_)
+    print("Accuracy:", accuracy_score(y_test, grid.predict(X_test)))
