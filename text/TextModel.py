@@ -113,7 +113,7 @@ def sentence_to_vec(df, embedding_model):
 def clean_stop_words_and_special_characters_and_set_target(df: pd.DataFrame):
     text_cleaner = TextCleaner()
     df['tokens'] = text_cleaner.apply_cleaner(df['Utterance'])
-    df['labels'] = df['Sentiment'].replace({'negative': 0, 'neutral': 1, 'positive': 0})
+    df['labels'] = df['Sentiment'].replace({'negative': 0, 'neutral': 1, 'positive': 2})
     df = df.dropna(subset=['tokens'])
     return df
 
