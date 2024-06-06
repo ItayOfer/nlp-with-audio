@@ -1,10 +1,14 @@
 import pandas as pd
 
+import utils
+
 
 class FeatureEngineering:
-    def __init__(self, path: str, speaker_combinations=None):
+    def __init__(self, path: str, percent_of_speakers: float = 0.8, speaker_combinations=None):
         self.path = path
         self.speaker_combinations = speaker_combinations if speaker_combinations is not None else {}
+        self.top_speakers = ['other']
+        self.percent_of_speakers = percent_of_speakers
 
     @staticmethod
     def calculate_utterance_length(data):
@@ -45,17 +49,53 @@ class FeatureEngineering:
         data['Total_Speakers_id'] = data['Speaker_unique'].apply(lambda x: self.speaker_combinations.get(tuple(x), 0))
         return data
 
-    def run(self, data=None):
+    def find_to_speakers(self, data):
+        all_values = pd.Series([item for sublist in data['Speaker_unique'] for item in sublist])
+        value_counts = all_values.value_counts()
+        total_speakers = len(value_counts)
+        threshold = self.percent_of_speakers * total_speakers
+        self.top_speakers += value_counts[value_counts >= threshold].index.tolist()
+
+    def encode_speakers_to_binary(self, data):
+        def encode_row(row):
+            row_set = set(row)
+            # Initialize dictionary with zeros for common values and 'other'
+            encoded = {val: 0 for val in self.top_speakers}
+            encoded['other'] = 0
+
+            # Encode the row
+            for item in row_set:
+                if item in self.top_speakers:
+                    encoded[item] = 1
+                else:
+                    encoded['other'] = 1
+
+            return pd.Series(encoded)
+
+        binary_encoded_df = data['Speaker_unique'].apply(encode_row)
+        return binary_encoded_df
+
+    def run(self, data=None, train=True):
         """
         Runs the entire feature engineering
         """
-        if not data:
+        if data is None:
             data = pd.read_csv(self.path)
         data = self.calculate_utterance_length(data)
         data = self.calculate_utterance_word_length(data)
         data = self.dialogue_speakers(data)
         data = self.total_speakers_id(data)
-        return data
+        if train:
+            self.find_to_speakers(data)
+        data[self.top_speakers] = self.encode_speakers_to_binary(data)
+        res = data[self.top_speakers + ['Total_Speakers_id', 'utterance_spoken_length(secs)', 'utterance_length(words)']]
+        res.columns = [f'fe_features_{col}' for col in res.columns]
+        res[['Utterance_ID', 'Dialogue_ID']] = data[['Utterance_ID', 'Dialogue_ID']]
+        res = utils.file_key_generator(res)
+        res = res.set_index('file_key')
+        res = res.drop(columns=['Utterance_ID', 'Dialogue_ID'])
+        return res
+
 
 if __name__ == '__main__':
 

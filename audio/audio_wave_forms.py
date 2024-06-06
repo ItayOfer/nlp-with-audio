@@ -46,7 +46,7 @@ class AudioWaveformsConverter:
             'audio_feature_rolloff_mean': np.mean(spectral_rolloff),
             'audio_feature_rms_energy_mean': np.mean(rms_energy),
             'audio_feature_zcr_mean': np.mean(zcr),
-            'audio_feature_tempo': tempo,
+            'audio_feature_tempo': tempo[0],
             'audio_feature_tempogram_mean': np.mean(tempogram),
             'audio_feature_tempogram_ratio_mean': np.mean(tempogram_ratio),
             'audio_feature_tonnetz_mean': np.mean(tonnetz)
