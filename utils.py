@@ -48,6 +48,7 @@ def concat_text_audio(audio: pd.DataFrame, text: pd.DataFrame, y: pd.Series):
     res = pd.merge(data, y, left_index=True, right_index=True)
     return res
 
+
 def get_data():
     audio_train, audio_dev, audio_test = get_audio_data()
     text_train, text_dev, text_test, y_train, y_dev, y_test = get_text_data_and_labels()

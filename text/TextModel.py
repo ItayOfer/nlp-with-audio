@@ -27,6 +27,10 @@ class TextCleaner:
         # Convert text to lowercase
         text = text.lower()
         # Remove special characters and digits
+        try:
+            text = text.encode('latin1').decode('cp1252')
+        except UnicodeEncodeError:
+            pass
         text = re.sub(r'[^a-zA-Z0-9\s.,!?-]', '', text)
 
         # Optionally, remove stop words

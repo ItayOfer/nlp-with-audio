@@ -1,7 +1,11 @@
+import numpy as np
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.mixture import GaussianMixture
+
 import utils
 from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, DBSCAN
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -93,3 +97,34 @@ if __name__ == '__main__':
     plot_dist_of_cluster(df_audio_cluster, 'Audio')
     plot_dist_of_cluster(df_text_cluster, 'Text')
 
+
+class ClusterTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self, cluster_type='kmeans', n_clusters=3):
+        self.cluster_type = cluster_type
+        self.n_clusters = n_clusters
+        self.clusterer = None
+
+    def fit(self, X, y=None):
+        if self.cluster_type == 'kmeans':
+            self.clusterer = KMeans(n_clusters=self.n_clusters)
+        elif self.cluster_type == 'dbscan':
+            self.clusterer = DBSCAN(min_samples=self.n_clusters)
+        elif self.cluster_type == 'gmm':
+            self.clusterer = GaussianMixture(n_components=self.n_clusters)
+        else:
+            raise ValueError("Unsupported cluster type. Choose from 'kmeans', 'dbscan', or 'gmm'")
+
+        self.clusterer.fit(X)
+        return self
+
+    def transform(self, X):
+        # Predict the clusters
+        if hasattr(self.clusterer, 'labels_'):
+            labels = self.clusterer.labels_
+        else:
+            labels = self.clusterer.predict(X)
+
+        # Return the original DataFrame with an added column for the cluster labels
+        X_transformed = X.copy()  # Ensure we don't modify the original DataFrame
+        X_transformed['cluster_label'] = labels
+        return X_transformed

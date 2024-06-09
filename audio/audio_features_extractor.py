@@ -6,15 +6,11 @@ from audio.audio_dataset import AudioDataset
 import os
 
 
-
 class AudioFeaturesExtractor:
     def __init__(self, path: str, info_file_name: str):
         self.path = path
         self.info_file_name = info_file_name
-        self.labels_dict = {
-            'negative': 0,
-            'neutral': 1,
-            'positive': 2}
+
 
     def audio_files_paths_listing(self) -> list:
         """
@@ -30,8 +26,6 @@ class AudioFeaturesExtractor:
     def file_key_generator(self, df: pd.DataFrame):
         # Creating file_key which is a unique identifier for each scene.
         df = utils.file_key_generator(df)
-
-        df['label'] = df['Sentiment'].map(self.labels_dict)
         info_file = df.sort_values(by='file_key')
         return info_file
 
@@ -91,7 +85,7 @@ class AudioFeaturesExtractor:
 
     def run(self):
         files_paths = self.audio_files_paths_listing()
-        info_file = self.file_key_generator()
+        info_file = self.file_key_generator(df=pd.read_csv(self.info_file_name))
         is_in_path = self.creating_is_in_identifier(files_paths)
         files_paths = self.filtering_audio_and_info_data_by_is_in(is_in_path, files_paths, info_file)
         data_loader = self.creating_data_loaders(files_paths, info_file)
