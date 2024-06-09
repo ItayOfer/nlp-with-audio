@@ -11,6 +11,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
+from modeling.clustering import ClusterTransformer
+from modeling.scaler import CustomMinMaxScaler
 
 if __name__ == '__main__':
     train_data, test_data, y_train, y_test = utils.get_data()
@@ -28,15 +30,17 @@ if __name__ == '__main__':
     X_test = test_data[text_feature_name]
     X_train = pd.merge(X_train, fe_train_data, left_index=True, right_index=True)
     X_test = pd.merge(X_test, fe_test_data, left_index=True, right_index=True)
-    scaler = MinMaxScaler()
+
     pipeline = Pipeline([
-        ('scaler', MinMaxScaler()),
+        ('scaler', CustomMinMaxScaler()),
+        ('clustering', ClusterTransformer(cluster_type='kmeans')),
         ('feature_selection', RFE(estimator=lgb.LGBMClassifier(n_estimators=50, learning_rate=0.1, random_state=42))),
         ('model',  RandomForestClassifier(random_state=42))
     ])
     param_grid = {
         'feature_selection__n_features_to_select': [10, 20, 30, 70],
-        'model__max_depth': [5, 10, 15]
+        'model__max_depth': [5, 10, 15],
+        'clustering__n_clusters': [2, 3, 4],
         # 'model__max_depth': [5, 10, 15],
         # 'model__learning_rate': [0.01, 0.05, 0.1],
         # 'model__n_estimators': [50, 100, 200]
