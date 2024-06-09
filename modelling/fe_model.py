@@ -14,9 +14,10 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
 if __name__ == '__main__':
     train_data, test_data, y_train, y_test = utils.get_data()
-    fe = FeatureEngineering('../MELD.Raw/train/train_sent_emo.csv')
-    fe_train_data = fe.run()
+    fe = FeatureEngineering()
     test_meld = pd.read_csv('../MELD.Raw/test_sent_emo.csv')
+    train_meld = pd.read_csv('../MELD.Raw/train/train_sent_emo.csv')
+    fe_train_data = fe.run(train_meld)
     fe_test_data = fe.run(test_meld, train=False)
     fe_features_name = fe_train_data.columns
     common_indices_train = fe_train_data.index.intersection(y_train.index)

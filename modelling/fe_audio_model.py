@@ -1,4 +1,5 @@
 import pandas as pd
+from sklearn.cluster import KMeans
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import MinMaxScaler
 import lightgbm as lgb
@@ -11,13 +12,15 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
+from modelling.scaler import CustomMinMaxScaler
 
 if __name__ == '__main__':
     train_data, test_data, y_train, y_test = utils.get_data()
     audio_feature_name = [col for col in train_data.columns if col.startswith('audio_feature_')]
-    fe = FeatureEngineering('../MELD.Raw/train/train_sent_emo.csv')
-    fe_train_data = fe.run()
+    fe = FeatureEngineering()
     test_meld = pd.read_csv('../MELD.Raw/test_sent_emo.csv')
+    train_meld = pd.read_csv('../MELD.Raw/train/train_sent_emo.csv')
+    fe_train_data = fe.run(train_meld)
     fe_test_data = fe.run(test_meld, train=False)
     fe_features_name = fe_train_data.columns
     common_indices_train = fe_train_data.index.intersection(y_train.index)
@@ -30,17 +33,17 @@ if __name__ == '__main__':
     X_test_audio = test_data[audio_feature_name]
     X_train = pd.merge(X_train_fe, X_train_audio, left_index=True, right_index=True)
     X_test = pd.merge(X_test_fe, X_test_audio, left_index=True, right_index=True)
-    scaler = MinMaxScaler()
     pipeline = Pipeline([
-        ('scaler', scaler),
+        ('scaler', CustomMinMaxScaler()),
+        ('clustering', KMeans(n_clusters=2)),
         ('feature_selection', RFE(estimator=lgb.LGBMClassifier(n_estimators=50, learning_rate=0.1, random_state=42))),
         ('model', RandomForestClassifier(random_state=42))
     ])
     param_grid = {
         'feature_selection__n_features_to_select': [10, 20, 30, 70],
+        'clustering__n_clusters': [2, 3, 4],
         'model__max_depth': [5, 10, 15],
-        # 'model__max_depth': [5, 10, 15],
-        # 'model__learning_rate': [0.01, 0.05, 0.1],
+        'model__learning_rate': [0.01, 0.05, 0.1],
         'model__n_estimators': [50, 100, 200]
     }
 
