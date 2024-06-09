@@ -1,19 +1,13 @@
 import pandas as pd
-from sklearn.cluster import KMeans
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import MinMaxScaler
 import lightgbm as lgb
 
 import utils
 from sklearn.model_selection import GridSearchCV
-from feature_engineering import FeatureEngineering
 from sklearn.feature_selection import RFE
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-
-from modeling.clustering import ClusterTransformer
-from modeling.scaler import CustomMinMaxScaler
 
 if __name__ == '__main__':
     train_data, test_data, y_train, y_test = utils.get_data()
