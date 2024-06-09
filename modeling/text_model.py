@@ -17,10 +17,11 @@ from modeling.scaler import CustomMinMaxScaler
 if __name__ == '__main__':
     train_data, test_data, y_train, y_test = utils.get_data()
     text_feature_name = [col for col in train_data.columns if col.startswith('text_feature_')]
-    fe = FeatureEngineering('../MELD.Raw/train/train_sent_emo.csv')
-    fe_train_data = fe.run()
+    fe = FeatureEngineering()
+    train_meld = pd.read_csv('../MELD.Raw/train/train_sent_emo.csv')
     test_meld = pd.read_csv('../MELD.Raw/test_sent_emo.csv')
     dev_meld = pd.read_csv('../MELD.Raw/dev_sent_emo.csv')
+    fe_train_data = fe.run(train_meld)
     fe_dev_data = fe.run(dev_meld, train=False)
     fe_test_data = fe.run(test_meld, train=False)
     # fe_train_data = pd.concat([fe_train_data, fe_dev_data])

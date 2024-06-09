@@ -4,8 +4,7 @@ import utils
 
 
 class FeatureEngineering:
-    def __init__(self, path: str, percent_of_speakers: float = 0.8, speaker_combinations=None):
-        self.path = path
+    def __init__(self, percent_of_speakers: float = 0.8, speaker_combinations=None):
         self.speaker_combinations = speaker_combinations if speaker_combinations is not None else {}
         self.top_speakers = ['other']
         self.percent_of_speakers = percent_of_speakers
@@ -75,12 +74,10 @@ class FeatureEngineering:
         binary_encoded_df = data['Speaker_unique'].apply(encode_row)
         return binary_encoded_df
 
-    def run(self, data=None, train=True):
+    def run(self, data: pd.DataFrame, train=True):
         """
         Runs the entire feature engineering
         """
-        if data is None:
-            data = pd.read_csv(self.path)
         data = self.calculate_utterance_length(data)
         data = self.calculate_utterance_word_length(data)
         data = self.dialogue_speakers(data)
