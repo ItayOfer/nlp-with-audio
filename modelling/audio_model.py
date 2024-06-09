@@ -25,8 +25,10 @@ if __name__ == '__main__':
         ('model', RandomForestClassifier(random_state=42))
     ])
     param_grid = {
-        'feature_selection__n_features_to_select': [10, 20, 30, 70],
-        'model__max_depth': [5, 10, 15]
+        'feature_selection__n_features_to_select': [10, 20, 30, 50, 70],
+        'model__max_depth': [5, 10, 15],
+        'clustering__n_clusters': [2, 3, 4],
+        'model__n_estimators': [50, 100, 200]
     }
 
     grid = GridSearchCV(pipeline, param_grid, cv=3, scoring='accuracy', verbose=1)
