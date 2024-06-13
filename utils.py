@@ -1,12 +1,17 @@
 """
 This script contains utility functions that used in this repo.
 """
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
 import pandas as pd
 from text.TextModel import TextModel
 import sys
 from os import path
+
 audio_path = path.join(path.dirname(path.abspath(__file__)), 'audio')
 sys.path.append(audio_path)
+
 
 def file_key_generator(df: pd.DataFrame):
     # Creating file_key which is a unique identifier for each scene.
@@ -32,11 +37,8 @@ def get_audio_data():
     return audio_train, audio_dev, audio_test
 
 
-def get_text_data_and_labels():
+def get_text_data_and_labels(text_train: pd.DataFrame, text_dev: pd.DataFrame, text_test: pd.DataFrame):
     text_model = TextModel()
-    text_train = pd.read_csv('../MELD.Raw/train/train_sent_emo.csv')
-    text_dev = pd.read_csv('../MELD.Raw/dev_sent_emo.csv')
-    text_test = pd.read_csv('../MELD.Raw/test_sent_emo.csv')
     X_train_text, y_train = text_model.preprocessing(text_train)
     X_dev_text, y_dev = text_model.preprocessing(text_dev)
     X_test_text, y_test = text_model.preprocessing(text_test)
@@ -51,12 +53,48 @@ def concat_text_audio(audio: pd.DataFrame, text: pd.DataFrame, y: pd.Series):
 
 def get_data():
     audio_train, audio_dev, audio_test = get_audio_data()
-    text_train, text_dev, text_test, y_train, y_dev, y_test = get_text_data_and_labels()
+    text_train_tmp = pd.read_csv('../MELD.Raw/train/train_sent_emo.csv')
+    text_dev_tmp = pd.read_csv('../MELD.Raw/dev_sent_emo.csv')
+    text_test_tmp = pd.read_csv('../MELD.Raw/test_sent_emo.csv')
+    text_train, text_dev, text_test, y_train, y_dev, y_test = get_text_data_and_labels(text_train_tmp,
+                                                                                       text_dev_tmp,
+                                                                                       text_test_tmp)
     train_data = concat_text_audio(audio_train, text_train, y_train)
     dev_data = concat_text_audio(audio_dev, text_dev, y_dev)
     test_data = concat_text_audio(audio_test, text_test, y_test)
     # train_data = pd.concat([train_data, dev_data], axis=0)
+    train_data['emotion'] = text_train_tmp['Emotion']
+    test_data['emotion'] = text_test_tmp['Emotion']
     y_train = train_data['labels']
     train_data = train_data.drop(columns='labels')
     test_data = test_data.drop(columns='labels')
     return train_data, test_data, y_train, y_test
+
+
+class ColumnKeeperTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self, transformer):
+        self.transformer = transformer
+        self.column_names = []
+
+    def fit(self, X, y=None):
+        self.transformer.fit(X, y)
+        return self
+
+    def transform(self, X):
+        X_transformed = self.transformer.transform(X)
+        # Get output feature names
+        if hasattr(self.transformer, 'get_feature_names_out'):
+            self.column_names = self.transformer.get_feature_names_out()
+        else:
+            self.column_names = X.columns
+        return X_transformed
+
+    def get_feature_names_out(self):
+        return self.column_names
+
+
+def get_ohe_step():
+    encoder = ColumnTransformer(
+        transformers=[('cat', OneHotEncoder(), ['emotion'])],
+        remainder='passthrough')
+    return ColumnKeeperTransformer(encoder)
