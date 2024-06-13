@@ -63,8 +63,6 @@ def get_data():
     dev_data = concat_text_audio(audio_dev, text_dev, y_dev)
     test_data = concat_text_audio(audio_test, text_test, y_test)
     # train_data = pd.concat([train_data, dev_data], axis=0)
-    train_data['emotion'] = text_train_tmp['Emotion']
-    test_data['emotion'] = text_test_tmp['Emotion']
     y_train = train_data['labels']
     train_data = train_data.drop(columns='labels')
     test_data = test_data.drop(columns='labels')
@@ -74,7 +72,6 @@ def get_data():
 class ColumnKeeperTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, transformer):
         self.transformer = transformer
-        self.column_names = []
 
     def fit(self, X, y=None):
         self.transformer.fit(X, y)
@@ -82,12 +79,8 @@ class ColumnKeeperTransformer(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         X_transformed = self.transformer.transform(X)
-        # Get output feature names
-        if hasattr(self.transformer, 'get_feature_names_out'):
-            self.column_names = self.transformer.get_feature_names_out()
-        else:
-            self.column_names = X.columns
-        return X_transformed
+        col_names = [col.split('__')[1] for col in self.transformer.get_feature_names_out()]
+        return pd.DataFrame(X_transformed, columns=col_names)
 
     def get_feature_names_out(self):
         return self.column_names

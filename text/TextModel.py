@@ -132,4 +132,5 @@ class TextModel:
         df = df.set_index('file_key')
         sentence_vectors = sentence_to_vec(df, self.glove_model)
         sentence_vectors.columns = [f'text_feature_{i + 1}' for i in range(len(sentence_vectors.columns))]
+        sentence_vectors['emotion'] = df['Emotion']
         return sentence_vectors, df['labels']
