@@ -88,6 +88,6 @@ class ColumnKeeperTransformer(BaseEstimator, TransformerMixin):
 
 def get_ohe_step():
     encoder = ColumnTransformer(
-        transformers=[('cat', OneHotEncoder(), ['emotion'])],
+        transformers=[('cat', OneHotEncoder(drop='first'), ['emotion'])],
         remainder='passthrough')
     return ColumnKeeperTransformer(encoder)
