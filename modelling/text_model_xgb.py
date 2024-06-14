@@ -16,7 +16,6 @@ if __name__ == '__main__':
     test_meld = pd.read_csv('../MELD.Raw/test_sent_emo.csv')
     X_train = train_data[text_feature_name]
     X_test = test_data[text_feature_name]
-    # encoder = utils.get_ohe_step()
     pipeline = Pipeline([
         ('scaler', CustomMinMaxScaler()),
         ('clustering', KMeans(n_clusters=2)),
