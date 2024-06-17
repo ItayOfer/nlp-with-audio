@@ -44,22 +44,6 @@ class TextCleaner:
         return text_series.apply(self._clean)
 
 
-def sentence_to_vec(sentence_list, embedding_model):
-    vec_list = []
-    for sentence in sentence_list:
-        word_vectors = []
-        for word in sentence.split():
-            try:
-                word_vectors.append(embedding_model[word])
-            except KeyError:
-                continue  # Skip words not in the vocabulary
-        if word_vectors:
-            vec_list.append(np.mean(word_vectors, axis=0))
-        else:
-            vec_list.append(np.zeros(100))  # Assuming 100 dimensional embeddings
-    return np.array(vec_list)
-
-
 def extract_features(waveform, sr):
     """
     Calculate various spectral features and return them in a dictionary.
@@ -132,5 +116,4 @@ class TextModel:
         df = df.set_index('file_key')
         sentence_vectors = sentence_to_vec(df, self.glove_model)
         sentence_vectors.columns = [f'text_feature_{i + 1}' for i in range(len(sentence_vectors.columns))]
-        sentence_vectors['emotion'] = df['Emotion']
         return sentence_vectors, df['labels']

@@ -39,7 +39,6 @@ if __name__ == '__main__':
     plt.xticks(range(1, 11))
     plt.show()
 
-    # k = 3 from the plot
     kmeans_t = KMeans(n_clusters=3, random_state=42)
     kmeans_a = KMeans(n_clusters=3, random_state=42)
     kmeans_audio = kmeans_a.fit(X_audio)
@@ -48,8 +47,8 @@ if __name__ == '__main__':
     plt.figure(figsize=(8, 6))
     sns.heatmap(cm, annot=True, fmt="d", cmap='Blues', xticklabels=[0, 1, 2], yticklabels=[0, 1, 2])
     plt.title('Confusion Matrix')
-    plt.xlabel('Predicted Labels')
-    plt.ylabel('True Labels')
+    plt.xlabel('Audio Labels')
+    plt.ylabel('Text Labels')
     plt.show()
     acc = accuracy_score(kmeans_audio.labels_, kmeans_text.labels_)
     print(f'Accuracy: {acc}')
@@ -60,7 +59,7 @@ if __name__ == '__main__':
 
     # Create a scatter plot of the two PCA components
     plt.figure(figsize=(10, 6))
-    scatter_audio = plt.scatter(principal_components_audio[:, 0], principal_components_audio[:, 1], c=y_train['labels'], cmap='viridis',
+    scatter_audio = plt.scatter(principal_components_audio[:, 0], principal_components_audio[:, 1], c=y_train, cmap='viridis',
                           marker='o', alpha=0.5)
     plt.title('Cluster Visualization after PCA')
     plt.xlabel('Principal Component 1')
@@ -77,9 +76,9 @@ if __name__ == '__main__':
     plt.show()
 
     df_audio_cluster = pd.DataFrame({'cluster_column': kmeans_audio.labels_,
-                                     'target': y_train['labels']})
+                                     'target': y_train})
     df_text_cluster = pd.DataFrame({'cluster_column': kmeans_text.labels_,
-                                    'target': y_train['labels']})
+                                    'target': y_train})
 
     df_text_cluster['cluster_column'] = pd.Categorical(df_text_cluster['cluster_column'])
     df_audio_cluster['cluster_column'] = pd.Categorical(df_audio_cluster['cluster_column'])
@@ -90,7 +89,7 @@ if __name__ == '__main__':
         plt.title(f'Distribution of Target by Cluster In {title} Features')
         plt.xlabel('Target')
         plt.ylabel('Count')
-        plt.xticks([0, 1], labels=['Not Neutral', 'Neutral'])  # Assuming binary target 0 and 1
+        plt.xticks([0, 1, 2], labels=['Negative', 'Neutral', 'Positive'])
         plt.show()
 
 
