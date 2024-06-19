@@ -101,7 +101,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     for f in audio_feature_names:
-        sns.boxplot(x='cluster_column', y=f, hue='target', data=df_audio_cluster)
+        sns.boxplot(x='cluster_column', y=f, hue='target', data=df_plot_audio_cluster)
         plt.title('Box Plot of Values by Category')
         plt.show()
 
