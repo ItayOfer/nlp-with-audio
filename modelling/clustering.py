@@ -90,6 +90,7 @@ if __name__ == '__main__':
         plt.xlabel('Target')
         plt.ylabel('Count')
         plt.xticks([0, 1, 2], labels=['Negative', 'Neutral', 'Positive'])
+        plt.ylim(0, 2900)
         plt.show()
 
 
@@ -97,14 +98,22 @@ if __name__ == '__main__':
     plot_dist_of_cluster(df_text_cluster, 'Text')
     df_plot_audio_cluster = df_audio_cluster.reset_index()
     df_plot_audio_cluster[audio_feature_names] = X_audio[audio_feature_names]
+
+    df_plot_text_cluster = df_text_cluster.reset_index()
+    df_plot_text_cluster[text_feature_names] = X_text[text_feature_names]
+
     import seaborn as sns
     import matplotlib.pyplot as plt
 
-    for f in audio_feature_names:
-        sns.boxplot(x='cluster_column', y=f, hue='target', data=df_plot_audio_cluster)
-        plt.title('Box Plot of Values by Category')
-        plt.show()
+    # for f in audio_feature_names:
+    #     sns.boxplot(x='cluster_column', y=f, hue='target', data=df_plot_audio_cluster)
+    #     plt.title(f'Distribution of {f} by cluster by label')
+    #     plt.show()
 
+    for t in text_feature_names:
+        sns.boxplot(x='cluster_column', y=t, hue='target', data=df_plot_text_cluster)
+        plt.title(f'Distribution of {t} by cluster by label')
+        plt.show()
     import scipy.stats as stats
     selected_features = []
     homogeneity = []
@@ -138,33 +147,33 @@ if __name__ == '__main__':
 
 
 
-class ClusterTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self, cluster_type='kmeans', n_clusters=3):
-        self.cluster_type = cluster_type
-        self.n_clusters = n_clusters
-        self.clusterer = None
-
-    def fit(self, X, y=None):
-        if self.cluster_type == 'kmeans':
-            self.clusterer = KMeans(n_clusters=self.n_clusters)
-        elif self.cluster_type == 'dbscan':
-            self.clusterer = DBSCAN(min_samples=self.n_clusters)
-        elif self.cluster_type == 'gmm':
-            self.clusterer = GaussianMixture(n_components=self.n_clusters)
-        else:
-            raise ValueError("Unsupported cluster type. Choose from 'kmeans', 'dbscan', or 'gmm'")
-
-        self.clusterer.fit(X)
-        return self
-
-    def transform(self, X):
-        # Predict the clusters
-        if hasattr(self.clusterer, 'labels_'):
-            labels = self.clusterer.labels_
-        else:
-            labels = self.clusterer.predict(X)
-
-        # Return the original DataFrame with an added column for the cluster labels
-        X_transformed = X.copy()  # Ensure we don't modify the original DataFrame
-        X_transformed['cluster_label'] = labels
-        return X_transformed
+# class ClusterTransformer(BaseEstimator, TransformerMixin):
+#     def __init__(self, cluster_type='kmeans', n_clusters=3):
+#         self.cluster_type = cluster_type
+#         self.n_clusters = n_clusters
+#         self.clusterer = None
+#
+#     def fit(self, X, y=None):
+#         if self.cluster_type == 'kmeans':
+#             self.clusterer = KMeans(n_clusters=self.n_clusters)
+#         elif self.cluster_type == 'dbscan':
+#             self.clusterer = DBSCAN(min_samples=self.n_clusters)
+#         elif self.cluster_type == 'gmm':
+#             self.clusterer = GaussianMixture(n_components=self.n_clusters)
+#         else:
+#             raise ValueError("Unsupported cluster type. Choose from 'kmeans', 'dbscan', or 'gmm'")
+#
+#         self.clusterer.fit(X)
+#         return self
+#
+#     def transform(self, X):
+#         # Predict the clusters
+#         if hasattr(self.clusterer, 'labels_'):
+#             labels = self.clusterer.labels_
+#         else:
+#             labels = self.clusterer.predict(X)
+#
+#         # Return the original DataFrame with an added column for the cluster labels
+#         X_transformed = X.copy()  # Ensure we don't modify the original DataFrame
+#         X_transformed['cluster_label'] = labels
+#         return X_transformed
