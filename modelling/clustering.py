@@ -105,10 +105,10 @@ if __name__ == '__main__':
     import seaborn as sns
     import matplotlib.pyplot as plt
 
-    # for f in audio_feature_names:
-    #     sns.boxplot(x='cluster_column', y=f, hue='target', data=df_plot_audio_cluster)
-    #     plt.title(f'Distribution of {f} by cluster by label')
-    #     plt.show()
+    for f in audio_feature_names:
+        sns.boxplot(x='cluster_column', y=f, hue='target', data=df_plot_audio_cluster)
+        plt.title(f'Distribution of {f} by cluster by label')
+        plt.show()
 
     for t in text_feature_names:
         sns.boxplot(x='cluster_column', y=t, hue='target', data=df_plot_text_cluster)
