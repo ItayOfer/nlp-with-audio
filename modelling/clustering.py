@@ -22,8 +22,8 @@ if __name__ == '__main__':
     standard_scaler = StandardScaler()
     scaled_train_data = standard_scaler.fit_transform(train_data)
     scaled_train_data = pd.DataFrame(scaled_train_data, columns=train_data.columns)
-    X_audio = scaled_train_data[text_feature_names]
-    X_text = scaled_train_data[audio_feature_names]
+    X_audio = scaled_train_data[audio_feature_names]
+    X_text = scaled_train_data[text_feature_names]
     sse = []  # Sum of squared errors
     for k in range(1, 11):  # Test different numbers of clusters
         kmeans = KMeans(n_clusters=k, random_state=42)
@@ -95,6 +95,47 @@ if __name__ == '__main__':
 
     plot_dist_of_cluster(df_audio_cluster, 'Audio')
     plot_dist_of_cluster(df_text_cluster, 'Text')
+    df_plot_audio_cluster = df_audio_cluster.reset_index()
+    df_plot_audio_cluster[audio_feature_names] = X_audio[audio_feature_names]
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+
+    for f in audio_feature_names:
+        sns.boxplot(x='cluster_column', y=f, hue='target', data=df_audio_cluster)
+        plt.title('Box Plot of Values by Category')
+        plt.show()
+
+    import scipy.stats as stats
+    selected_features = []
+    homogeneity = []
+    for feature in audio_feature_names:
+        # Test between clusters
+        clusters = df_plot_audio_cluster['cluster_column'].unique()
+        cluster_groups = [df_plot_audio_cluster[df_plot_audio_cluster['cluster_column'] == cluster][feature] for cluster in clusters]
+        stat, p_between = stats.kruskal(*cluster_groups)
+
+        # If significant differences between clusters
+        if p_between < 0.1:
+            homogeneity_within_cluster = True
+            homogeneity.append(feature)
+
+            # Test within each cluster for target homogeneity
+            for cluster in clusters:
+                subdf = df_plot_audio_cluster[df_plot_audio_cluster['cluster_column'] == cluster]
+                target_groups = [subdf[subdf['target'] == target][feature] for target in subdf['target'].unique()]
+                if len(target_groups) > 1:
+                    stat, p_within = stats.kruskal(*target_groups)
+                    if p_within >= 0.05:
+                        continue
+                    else:
+                        homogeneity_within_cluster = False
+                        break
+
+            if homogeneity_within_cluster:
+                selected_features.append(feature)
+
+    print("Selected features:", selected_features)
+
 
 
 class ClusterTransformer(BaseEstimator, TransformerMixin):
