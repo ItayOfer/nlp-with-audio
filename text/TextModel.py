@@ -101,7 +101,7 @@ def sentence_to_vec(df, embedding_model):
 def clean_stop_words_and_special_characters_and_set_target(df: pd.DataFrame):
     text_cleaner = TextCleaner()
     df['tokens'] = text_cleaner.apply_cleaner(df['Utterance'])
-    df['labels'] = df['Sentiment'].replace({'negative': 0, 'neutral': 1, 'positive': 2})
+    df = utils.set_target(df)
     df = df.dropna(subset=['tokens'])
     return df
 
@@ -116,4 +116,4 @@ class TextModel:
         df = df.set_index('file_key')
         sentence_vectors = sentence_to_vec(df, self.glove_model)
         sentence_vectors.columns = [f'text_feature_{i + 1}' for i in range(len(sentence_vectors.columns))]
-        return sentence_vectors, df['labels']
+        return sentence_vectors, df['label']

@@ -19,6 +19,10 @@ def file_key_generator(df: pd.DataFrame):
     return df
 
 
+def set_target(df: pd.DataFrame):
+    df['label'] = df['Sentiment'].replace({'negative': 0, 'neutral': 1, 'positive': 2})
+    return df
+
 def generate_common_ids(df1: pd.DataFrame, df2: pd.DataFrame) -> list:
     """
     This function generates a list of common ids between two dataframes.
@@ -63,9 +67,9 @@ def get_data():
     dev_data = concat_text_audio(audio_dev, text_dev, y_dev)
     test_data = concat_text_audio(audio_test, text_test, y_test)
     # train_data = pd.concat([train_data, dev_data], axis=0)
-    y_train = train_data['labels']
-    train_data = train_data.drop(columns='labels')
-    test_data = test_data.drop(columns='labels')
+    y_train = train_data['label']
+    train_data = train_data.drop(columns='label')
+    test_data = test_data.drop(columns='label')
     return train_data, test_data, y_train, y_test
 
 

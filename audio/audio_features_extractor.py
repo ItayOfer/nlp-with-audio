@@ -10,10 +10,10 @@ class AudioFeaturesExtractor:
     """
     This class is responsible for dealing with the data loaders and returning audio wave forms.
     """
+
     def __init__(self, path: str, info_file_name: str):
         self.path = path
         self.info_file_name = info_file_name
-
 
     def audio_files_paths_listing(self) -> list:
         """
@@ -25,6 +25,7 @@ class AudioFeaturesExtractor:
         files_paths = [os.path.join(self.path, file) for file in sorted_files]
         return files_paths
 
+
     def file_key_generator(self, df: pd.DataFrame):
         """
         This method is responsible for creating an information data frame which consists the file keys (paths) of audio.
@@ -32,6 +33,7 @@ class AudioFeaturesExtractor:
         # Creating file_key which is a unique identifier for each scene.
         df = utils.file_key_generator(df)
         info_file = df.sort_values(by='file_key')
+        info_file = utils.set_target(info_file)
         return info_file
 
     @staticmethod
