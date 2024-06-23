@@ -8,8 +8,11 @@ logging.basicConfig(level=logging.INFO, filename='data_provider.log', filemode='
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-class DataProvider:
+class AudioExtractor:
     def __init__(self):
+        """
+        This class will extract audio from video files and save them as mp3 files
+        """
         self.video_dev_path = 'MELD.Raw/dev_splits_complete'
         self.video_test_path = 'MELD.Raw/output_repeated_splits_test'
         self.video_train_path = 'MELD.Raw/train/train_splits'
@@ -44,26 +47,19 @@ class DataProvider:
                     video_file_path = os.path.join(video_path, file_name)
                     audio_file_path = os.path.join(audio_path, check_files[0] + '.mp3')
                     try:
-                        DataProvider.extract_audio_from_video(video_file_path, audio_file_path)
+                        # Extract audio from video
+                        video = VideoFileClip(video_file_path)
+                        video.audio.write_audiofile(audio_file_path, codec='mp3')
                     except Exception:
                         error_message = f'Error extracting audio from {video_file_path} to {audio_file_path}'
                         logging.error(error_message)
                         self.unsuccessful_file_names[path].append(file_name)
+        # Log unsuccessful files
         logging.info(f"unsuccessful to read {len(self.unsuccessful_file_names['train'])} from train")
         logging.info(f"unsuccessful to read {len(self.unsuccessful_file_names['dev'])} from dev")
         logging.info(f"unsuccessful to read {len(self.unsuccessful_file_names['test'])} from test")
 
-    @staticmethod
-    def extract_audio_from_video(video_file_path: str, audio_file_path: str) -> None:
-        """
-        Extracts audio from the video file and saves it to a specified path.
-        :param video_file_path: Path to the video file.
-        :param audio_file_path: Path where the extracted audio will be saved.
-        """
-        video = VideoFileClip(video_file_path)
-        video.audio.write_audiofile(audio_file_path, codec='mp3')
-
 
 if __name__ == '__main__':
-    data_provider = DataProvider()
+    data_provider = AudioExtractor()
     data_provider.run()

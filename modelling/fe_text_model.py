@@ -1,4 +1,4 @@
-from feature_engineering import FeatureEngineering
+from modelling.feature_engineering import FeatureEngineering
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.metrics import accuracy_score

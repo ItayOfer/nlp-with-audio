@@ -4,9 +4,8 @@ from sklearn.metrics import accuracy_score
 import lightgbm as lgb
 import utils
 from sklearn.model_selection import GridSearchCV
-from feature_engineering import FeatureEngineering
+from modelling.feature_engineering import FeatureEngineering
 from sklearn.feature_selection import RFE
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from modelling.scaler import CustomMinMaxScaler
 from xgboost import XGBClassifier
