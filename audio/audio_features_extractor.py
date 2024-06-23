@@ -7,6 +7,9 @@ import os
 
 
 class AudioFeaturesExtractor:
+    """
+    This class is responsible for dealing with the data loaders and returning audio wave forms.
+    """
     def __init__(self, path: str, info_file_name: str):
         self.path = path
         self.info_file_name = info_file_name
@@ -14,8 +17,7 @@ class AudioFeaturesExtractor:
 
     def audio_files_paths_listing(self) -> list:
         """
-
-        :return:
+        This method is responsible for collecting the file paths of the audio data.
         """
         # Sorting the files by their dia and utt
         sorted_files = sorted(os.listdir(self.path))
@@ -24,6 +26,9 @@ class AudioFeaturesExtractor:
         return files_paths
 
     def file_key_generator(self, df: pd.DataFrame):
+        """
+        This method is responsible for creating an information data frame which consists the file keys (paths) of audio.
+        """
         # Creating file_key which is a unique identifier for each scene.
         df = utils.file_key_generator(df)
         info_file = df.sort_values(by='file_key')
@@ -46,11 +51,7 @@ class AudioFeaturesExtractor:
     @staticmethod
     def filtering_audio_and_info_data_by_is_in(is_in_data, files_paths, info_file):
         """
-
-        :param is_in_data:
-        :param files_paths:
-        :param info_file:
-        :return:
+        This method is responsible for matching the audio data to the raw data via file_key.
         """
         # Ensure exact matches are possible
         matching_keys = set(is_in_data['file_key']).intersection(set(info_file['file_key']))
@@ -63,7 +64,9 @@ class AudioFeaturesExtractor:
 
     @staticmethod
     def creating_data_loaders(files_paths: list, info_file: pd.DataFrame) -> DataLoader:
-        """This function takes the paths lists and the info datasets and returns a dataloader for each audio file"""
+        """
+        This function takes the paths lists and the info datasets and returns a dataloader for each audio file
+        """
         audio_dataset = AudioDataset(files_paths, info_file['label'].values.tolist())
         data_loader = DataLoader(audio_dataset, batch_size=1)
         return data_loader
@@ -71,9 +74,7 @@ class AudioFeaturesExtractor:
     @staticmethod
     def creating_audio_waveforms(data_loader: DataLoader):
         """
-        get a data loader and return the waveforms and labels in a dictionary
-        :param data_loader: DataLoader object
-        :return: dict with waveforms and labels
+        This method is responsible getting a data loader and return the waveforms and labels in a dictionary
         """
         res = {}
         for audio_path_name, waveform, label in data_loader:

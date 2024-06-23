@@ -26,8 +26,7 @@ def run_audio_fe():
 def run_audio_waveform(sample_rate=16000):
     """
     This function runs the AudioWaveformsConverter class on the train, test and dev datasets.
-    :param sample_rate: the sample rate of the audio files
-    :return:
+    It returns the final audio data that we will be working with.
     """
     train = AudioWaveformsConverter('train_data.pkl', sample_rate)
     test = AudioWaveformsConverter('test_data.pkl', sample_rate)
@@ -49,5 +48,7 @@ def run_audio_waveform(sample_rate=16000):
 
 
 if __name__ == '__main__':
-    run_audio_fe()  # create the dict files and saves them as a pickle file
-    run_audio_waveform()  # create the csv data files
+    # Create the dict files and saves them as a pickle file
+    run_audio_fe()
+    # Create the csv data files
+    run_audio_waveform()

@@ -4,6 +4,9 @@ import torch
 
 
 class AudioDataset(Dataset):
+    """
+    This class is responsible for creating the data loaders (information - paths etc) for each one of the audio files.
+    """
     def __init__(self, file_paths: list, labels: list, max_length: int = 112000, transform=None):
         self.file_paths = file_paths
         self.labels = labels

@@ -5,6 +5,9 @@ import librosa
 
 
 class AudioWaveformsConverter:
+    """
+    This class is responsible for dealing with the audio wave forms, and creating audio features from those wave forms.
+    """
     def __init__(self, path, sample_rate):
         self.path = path
         self.sample_rate = sample_rate
