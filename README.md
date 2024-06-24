@@ -10,8 +10,8 @@ Hence, when dealing with sentiment analysis, we believe that the data you should
 Performing sentiment analysis for parts of series like F.R.I.E.N.D.S when relying on textual data alone (and without any video/audio information), may be very difficult (we believe that good amount of sarcasm may mislead such NLP model).
 In our Medium (place holder for medium article) we ellaborately explained our motivation for the following research questions:
 
-**1. Can the inclusion of audio features improve the performance of an existing NLP model?
-2. Can these features improve the performance of any predictive model used on this data?**
+**1. Can the inclusion of audio features improve the performance of an existing NLP model?**
+**2. Can these features improve the performance of any predictive model used on this data?**
 
 This repository contains the codebase of our work.
 
