@@ -3,6 +3,9 @@
 ## Overview
 For the first time dealing with audio data, we came up with [MELD](https://affective-meld.github.io/), a dataset that contains a collection of video clips from the popular television show F.R.I.E.N.D.S.
 Each video clip is some utterance within a scene from the famous show, along with accompanying tabular data providing information about the scenes' utterances, sentiment, emotion, and more.
+When humans assess sentiment, they naturally rely on various cues such as the speaker's tonne, energy, face expressions, etc...
+Hence, when dealing with sentiment analysis, we believe that the data you should be looking for, should be similar to the one that we humans use.
+Performing sentiment analysis for parts of series like F.R.I.E.N.D.S when relying on textual data alone (and without any video/audio information), may be very difficult (we believe that good amount of sarcasm may mislead such NLP model).
 In our Medium (place holder for medium article) we ellaborately explained our motivation for the following research questions:
 
 1. Can the inclusion of audio features improve the performance of an existing NLP model?
@@ -16,6 +19,7 @@ This repository contains the codebase of our work.
 - [audio](https://github.com/lvyor307/nlp-with-audio/tree/main/audio) - Directory that contains the scripts that perform the relevant actions on the audio datasets, in order to attain the required audio features.
 - [modelling](https://github.com/lvyor307/nlp-with-audio/tree/main/modelling) - Directory that contains several scripts that represent out different models.
 - [text](https://github.com/lvyor307/nlp-with-audio/tree/main/text) - Directory that contains the script that performs some manipulation on the textual data.
+- [DescriptiveStatistics](https://github.com/lvyor307/nlp-with-audio/tree/main/DescriptiveStatistics) - Directory that contains the script that generate most of the plots as part of our EDA section.
 
 
 ## Usage
