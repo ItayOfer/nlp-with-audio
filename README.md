@@ -2,7 +2,7 @@
 
 ## Overview
 For the first time dealing with audio data, we came up with [MELD](https://affective-meld.github.io/), a dataset that contains a collection of video clips from the popular television show F.R.I.E.N.D.S.
-Each video clip is some utterance within a scene from the famous show, along with accompanying tabular data providing information about the scenes' utterances, sentiment, emotion, and more.
+Each video clip is some utterance within a scene from the famous show, along with accompanying tabular data providing information about the scenes' utterances, sentiment, emotion, and more. <br />
 When humans assess sentiment, they naturally rely on various cues such as the speaker's tonne, energy, face expressions, etc...
 Hence, when dealing with sentiment analysis, we believe that the data you should be looking for, should be similar to the one that we humans use.
 Performing sentiment analysis for parts of series like F.R.I.E.N.D.S when relying on textual data alone (and without any video/audio information), may be very difficult (we believe that good amount of sarcasm may mislead such NLP model).
