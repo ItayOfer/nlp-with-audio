@@ -13,10 +13,6 @@ from sklearn.decomposition import PCA
 
 if __name__ == '__main__':
     train_data, test_data, y_train, y_test = utils.get_data()
-    # train_data = pd.read_csv('train_data.csv')
-    # y_train = pd.read_csv('y_train.csv')
-    # train_data = train_data.set_index('file_key')
-    # y_train = y_train.set_index('file_key')
     text_feature_names = [col for col in train_data.columns if col.startswith('text_feature_')]
     audio_feature_names = [col for col in train_data.columns if col.startswith('audio_feature_')]
     standard_scaler = StandardScaler()
@@ -68,10 +64,6 @@ if __name__ == '__main__':
     # Adding a color bar to show cluster colors
     plt.colorbar(scatter_audio, label='Cluster')
 
-    # # Optionally, you can add annotations or additional information
-    # for i, txt in enumerate(df.index):
-    #     plt.annotate(txt, (principal_components[i, 0], principal_components[i, 1]), textcoords="offset points",
-    #                  xytext=(0, 10), ha='center')
 
     plt.show()
 
@@ -114,66 +106,6 @@ if __name__ == '__main__':
         sns.boxplot(x='cluster_column', y=t, hue='target', data=df_plot_text_cluster)
         plt.title(f'Distribution of {t} by cluster by label')
         plt.show()
-    import scipy.stats as stats
-    selected_features = []
-    homogeneity = []
-    for feature in audio_feature_names:
-        # Test between clusters
-        clusters = df_plot_audio_cluster['cluster_column'].unique()
-        cluster_groups = [df_plot_audio_cluster[df_plot_audio_cluster['cluster_column'] == cluster][feature] for cluster in clusters]
-        stat, p_between = stats.kruskal(*cluster_groups)
-
-        # If significant differences between clusters
-        if p_between < 0.1:
-            homogeneity_within_cluster = True
-            homogeneity.append(feature)
-
-            # Test within each cluster for target homogeneity
-            for cluster in clusters:
-                subdf = df_plot_audio_cluster[df_plot_audio_cluster['cluster_column'] == cluster]
-                target_groups = [subdf[subdf['target'] == target][feature] for target in subdf['target'].unique()]
-                if len(target_groups) > 1:
-                    stat, p_within = stats.kruskal(*target_groups)
-                    if p_within >= 0.05:
-                        continue
-                    else:
-                        homogeneity_within_cluster = False
-                        break
-
-            if homogeneity_within_cluster:
-                selected_features.append(feature)
-
-    print("Selected features:", selected_features)
 
 
 
-# class ClusterTransformer(BaseEstimator, TransformerMixin):
-#     def __init__(self, cluster_type='kmeans', n_clusters=3):
-#         self.cluster_type = cluster_type
-#         self.n_clusters = n_clusters
-#         self.clusterer = None
-#
-#     def fit(self, X, y=None):
-#         if self.cluster_type == 'kmeans':
-#             self.clusterer = KMeans(n_clusters=self.n_clusters)
-#         elif self.cluster_type == 'dbscan':
-#             self.clusterer = DBSCAN(min_samples=self.n_clusters)
-#         elif self.cluster_type == 'gmm':
-#             self.clusterer = GaussianMixture(n_components=self.n_clusters)
-#         else:
-#             raise ValueError("Unsupported cluster type. Choose from 'kmeans', 'dbscan', or 'gmm'")
-#
-#         self.clusterer.fit(X)
-#         return self
-#
-#     def transform(self, X):
-#         # Predict the clusters
-#         if hasattr(self.clusterer, 'labels_'):
-#             labels = self.clusterer.labels_
-#         else:
-#             labels = self.clusterer.predict(X)
-#
-#         # Return the original DataFrame with an added column for the cluster labels
-#         X_transformed = X.copy()  # Ensure we don't modify the original DataFrame
-#         X_transformed['cluster_label'] = labels
-#         return X_transformed
