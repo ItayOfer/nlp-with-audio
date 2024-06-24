@@ -18,7 +18,7 @@ This repository contains the codebase of our work.
 - [text](https://github.com/lvyor307/nlp-with-audio/tree/main/text) - Directory that contains the script that performs some manipulation on the textual data.
 
 
-### Usage
+## Usage
 1. Clone the following repository to your local machine.
 2. Download [MELD](https://affective-meld.github.io/).
 3. Extract the data to your PyCharm project.
