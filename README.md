@@ -1,9 +1,21 @@
-# FRIENDS Scenes Dataset
+# Sentiment Analysis with F.R.I.E.N.D.S Dataset
 
 ## Overview
-The FRIENDS Scenes Dataset contains a collection of video clips from the popular television show FRIENDS. Each video clip is some scene from the famous show, along with accompanying tabular data providing information about the scenes' utterances, sentiment, emotion, and more.
-You can download the datasets here: 
-https://affective-meld.github.io/. The datasets are already divided to train, test and dev.
+For the first time dealing with audio data, we came up with [MELD](https://affective-meld.github.io/), a dataset that contains a collection of video clips from the popular television show F.R.I.E.N.D.S.
+Each video clip is some utterance within a scene from the famous show, along with accompanying tabular data providing information about the scenes' utterances, sentiment, emotion, and more.
+In our Medium (place holder for medium article) we ellaborately explained our motivation for the following research questions:
+
+1. Can the inclusion of audio features improve the performance of an existing NLP model?
+2. Can these features improve the performance of any predictive model used on this data?
+
+This repository contains the codebase of our work.
+
+
+
+
+
+
+need to change
 ## Contents
 - [Introduction](#introduction)
 - [Dataset Structure](#dataset-structure)
@@ -11,11 +23,12 @@ https://affective-meld.github.io/. The datasets are already divided to train, te
 - [Script for Audio Extraction](#script-for-audio-extraction)
 
 
-## Introduction
+## Walkthrough(??)
 FRIENDS is a beloved sitcom known for its humor, memorable characters, iconic moments, and lots of sarcasm.
-We aim to use these datasets for sentiment and emotions analysis. We also aim to compare the results of a NLP model with an Audio featured model.
-We believe that the sarcasm of this show might mislead the NLP model.
+We aim to use these datasets for sentiment analysis. We also aim to compare the results of a NLP model with an Audio featured model.
+We believe that the nature of this problem (sentiment analysis) might mislead the NLP model.
 
+You are more then welcome visiting place_holder_for_medium to view our work 
 ## Dataset Structure
 The dataset is organized into two main components:
 1. Video Clips: This directory contains video files (.mp4 format) of individual scenes extracted from FRIENDS episodes.
