@@ -11,6 +11,16 @@ import pandas as pd
 import seaborn as sns
 from sklearn.decomposition import PCA
 
+def plot_dist_of_cluster(df, title):
+    plt.figure(figsize=(10, 6))
+    sns.histplot(data=df, x='target', hue='cluster_column', multiple='dodge', shrink=0.8, bins=2, discrete=True)
+    plt.title(f'Distribution of Target by Cluster In {title} Features')
+    plt.xlabel('Target')
+    plt.ylabel('Count')
+    plt.xticks([0, 1, 2], labels=['Negative', 'Neutral', 'Positive'])
+    plt.ylim(0, 2900)
+    plt.show()
+    
 if __name__ == '__main__':
     train_data, test_data, y_train, y_test = utils.get_data()
     text_feature_names = [col for col in train_data.columns if col.startswith('text_feature_')]
@@ -75,17 +85,6 @@ if __name__ == '__main__':
     df_text_cluster['cluster_column'] = pd.Categorical(df_text_cluster['cluster_column'])
     df_audio_cluster['cluster_column'] = pd.Categorical(df_audio_cluster['cluster_column'])
 
-    def plot_dist_of_cluster(df, title):
-        plt.figure(figsize=(10, 6))
-        sns.histplot(data=df, x='target', hue='cluster_column', multiple='dodge', shrink=0.8, bins=2, discrete=True)
-        plt.title(f'Distribution of Target by Cluster In {title} Features')
-        plt.xlabel('Target')
-        plt.ylabel('Count')
-        plt.xticks([0, 1, 2], labels=['Negative', 'Neutral', 'Positive'])
-        plt.ylim(0, 2900)
-        plt.show()
-
-
     plot_dist_of_cluster(df_audio_cluster, 'Audio')
     plot_dist_of_cluster(df_text_cluster, 'Text')
     df_plot_audio_cluster = df_audio_cluster.reset_index()
@@ -93,9 +92,6 @@ if __name__ == '__main__':
 
     df_plot_text_cluster = df_text_cluster.reset_index()
     df_plot_text_cluster[text_feature_names] = X_text[text_feature_names]
-
-    import seaborn as sns
-    import matplotlib.pyplot as plt
 
     for f in audio_feature_names:
         sns.boxplot(x='cluster_column', y=f, hue='target', data=df_plot_audio_cluster)
