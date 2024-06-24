@@ -10,44 +10,21 @@ In our Medium (place holder for medium article) we ellaborately explained our mo
 
 This repository contains the codebase of our work.
 
-
-
-
-
-
-need to change
 ## Contents
-- [Introduction](#introduction)
-- [Dataset Structure](#dataset-structure)
-- [Data Fields](#data-fields)
-- [Script for Audio Extraction](#script-for-audio-extraction)
+- [mp4_to_mp3.py](https://github.com/lvyor307/nlp-with-audio/blob/main/mp4_to_mp3.py) - Convert our mp4 data to mp3 format.
+- [utils.py](https://github.com/lvyor307/nlp-with-audio/blob/main/utils.py) - Contains our utility functions.
+- [audio](https://github.com/lvyor307/nlp-with-audio/tree/main/audio) - Directory that contains the scripts that perform the relevant actions on the audio datasets, in order to attain the required audio features.
+- [modelling](https://github.com/lvyor307/nlp-with-audio/tree/main/modelling) - Directory that contains several scripts that represent out different models.
+- [text](https://github.com/lvyor307/nlp-with-audio/tree/main/text) - Directory that contains the script that performs some manipulation on the textual data.
 
-
-## Walkthrough(??)
-FRIENDS is a beloved sitcom known for its humor, memorable characters, iconic moments, and lots of sarcasm.
-We aim to use these datasets for sentiment analysis. We also aim to compare the results of a NLP model with an Audio featured model.
-We believe that the nature of this problem (sentiment analysis) might mislead the NLP model.
-
-You are more then welcome visiting place_holder_for_medium to view our work 
-## Dataset Structure
-The dataset is organized into two main components:
-1. Video Clips: This directory contains video files (.mp4 format) of individual scenes extracted from FRIENDS episodes.
-2. Tabular Data: This dataset also includes a CSV file providing structured information about each scene, including utterance(written), sentiment analysis, emotion classification, and more.
-
-## Data Fields
-The tabular data includes the following fields(and more):
-- **Dialogue_ID**: Unique identifier for the dialogue in the scene.
-- **Utterance_ID**: Unique Identifier for the utterance in scene.
-- **Sentiment**: Sentiment analysis of the dialogue (e.g., positive, negative, neutral).
-- **Emotion**: Emotion classification of the dialogue (e.g., happy, sad, angry).
-- **Speaker**: Character speaking the dialogue.
-
-
-## Script for Audio Extraction
-To facilitate further analysis or applications requiring audio data, we provide a Python script for extracting audio from the video clips. This script utilizes the `moviepy.editor` library to extract audio in MP3 format from the MP4 video files.
 
 ### Usage
-1. Install the necessary packages by checking `requirements.txt`.
-2. Extract the data to your PyCharm project.
-3. Execute the provided script `DataProvider.py`. You do not need to input specific paths.
+1. Clone the following repository to your local machine.
+2. Download [MELD](https://affective-meld.github.io/).
+3. Extract the data to your PyCharm project.
+4. Install the necessary packages by checking `requirements.txt`
+5. Execute the provided script `mp4_to_mp3.py` to convert to audio files to mp3 dormat. You do not need to input specific paths.
+6. (optional) Exectue the provided script `audio/run_audio_features.py` to attain the audio features from the audio data.
+   Similarly, you may just examine `audio/train_fe.csv` and `audio/text_fe.csv` to attain the desired output.
+7. Run the different scripts within `modelling/` directory to attain the results of the different models.
 
