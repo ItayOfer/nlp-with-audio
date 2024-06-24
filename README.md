@@ -34,3 +34,19 @@ This repository contains the codebase of our work.
    Similarly, you may just examine `audio/train_fe.csv` and `audio/text_fe.csv` to attain the desired output.
 7. Run the different scripts within `modelling/` directory to attain the results of the different models.
 
+## References
+Our work is heavily based on the following [repository](https://github.com/declare-lab/MELD/), on the following [paper](https://arxiv.org/pdf/1810.02508.pdf).
+
+## Citation
+S. Poria, D. Hazarika, N. Majumder, G. Naik, R. Mihalcea,
+E. Cambria. MELD: A Multimodal Multi-Party Dataset
+for Emotion Recognition in Conversation. (2018)
+
+<br />
+<br />
+
+Chen, S.Y., Hsu, C.C., Kuo, C.C. and Ku, L.W.
+EmotionLines: An Emotion Corpus of Multi-Party
+Conversations. arXiv preprint arXiv:1802.08379 (2018).
+
+
