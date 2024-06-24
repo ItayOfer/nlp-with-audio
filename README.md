@@ -42,9 +42,6 @@ S. Poria, D. Hazarika, N. Majumder, G. Naik, R. Mihalcea,
 E. Cambria. MELD: A Multimodal Multi-Party Dataset
 for Emotion Recognition in Conversation. (2018)
 
-<br />
-<br />
-
 Chen, S.Y., Hsu, C.C., Kuo, C.C. and Ku, L.W.
 EmotionLines: An Emotion Corpus of Multi-Party
 Conversations. arXiv preprint arXiv:1802.08379 (2018).
