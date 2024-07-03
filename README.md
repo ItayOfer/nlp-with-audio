@@ -15,7 +15,7 @@ In our Medium (place holder for medium article) we ellaborately explained our mo
 
 This repository contains the codebase of our work.
 <br />
-For those who interested, you can find our final report [here]([StatisticalLearningFinalReport.pdf](https://github.com/user-attachments/files/16080755/StatisticalLearningFinalReport.pdf)
+For those who interested, you can find our final report [here](https://github.com/user-attachments/files/16080755/StatisticalLearningFinalReport.pdf)
 ).
 
 ## Contents
